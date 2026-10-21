@@ -12,5 +12,8 @@
   },
   "devDependencies": {
     "@railwalker/testkit": "workspace:*"
+  },
+  "dependencies": {
+    "viem": "2.57.7"
   }
 }
