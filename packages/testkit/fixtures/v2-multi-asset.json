@@ -1,0 +1,41 @@
+{
+  "x402Version": 2,
+  "error": "PAYMENT-SIGNATURE header is required",
+  "resource": {
+    "url": "https://fixtures.example/ok",
+    "description": "fixture",
+    "mimeType": "application/json"
+  },
+  "accepts": [
+    {
+      "scheme": "exact",
+      "network": "eip155:42220",
+      "amount": "500",
+      "asset": "0xcebA9300f2b948710d2653dD7B07f33A8B32118C",
+      "payTo": "0x1111111111111111111111111111111111111111",
+      "maxTimeoutSeconds": 300,
+      "extra": { "name": "USDC", "version": "2" }
+    },
+    {
+      "scheme": "exact",
+      "network": "eip155:42220",
+      "amount": "500",
+      "asset": "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e",
+      "payTo": "0x1111111111111111111111111111111111111111",
+      "maxTimeoutSeconds": 300,
+      "extra": { "name": "Tether USD", "version": "1" }
+    },
+    {
+      "scheme": "exact",
+      "network": "eip155:42220",
+      "amount": "500",
+      "asset": "0xD2ab3C9A02DBBAB236BfEC45D1d755DF4267F771",
+      "payTo": "0x1111111111111111111111111111111111111111",
+      "maxTimeoutSeconds": 300,
+      "extra": { "name": "Tether America USD", "version": "1" }
+    }
+  ],
+  "extensions": {
+    "builder-code": { "info": { "a": "celo_29928c447ace" } }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "railwalker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Pays every toll on Celo's rails and shows you what's broken.",
+  "license": "MIT",
+  "packageManager": "pnpm@10.26.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.1",
+    "typescript": "7.0.2",
+    "vitest": "5.0.5"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "@railwalker/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "@railwalker/testkit": "workspace:*"
+  }
+}
