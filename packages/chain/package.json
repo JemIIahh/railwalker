@@ -1,0 +1,22 @@
+{
+  "name": "@railwalker/chain",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@celo/attribution-tags": "0.5.0",
+    "@railwalker/core": "workspace:*",
+    "viem": "2.57.7",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@railwalker/testkit": "workspace:*"
+  }
+}
