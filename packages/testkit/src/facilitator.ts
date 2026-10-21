@@ -1,4 +1,4 @@
-import { ASSETS } from '@railwalker/core';
+import { ASSETS, CELO_SEPOLIA_USDC } from '@railwalker/core';
 import type { FacilitatorClient } from '@x402/core/server';
 
 export const MOCK_TX_HASH = `0x${'ab'.repeat(32)}` as `0x${string}`;
@@ -59,6 +59,16 @@ export function mockFacilitator(opts: MockFacilitatorOptions = {}): MockFacilita
                 version: a.eip712Version,
                 assetTransferMethod: a.method,
               })),
+            },
+          },
+          // The sandbox network, so fixtures configured for Sepolia initialise in tests. The real facilitator's coverage is not assumed.
+          {
+            x402Version: 2,
+            scheme: 'exact',
+            network: 'eip155:11142220',
+            extra: {
+              extensions: ['eip2612GasSponsoring'],
+              supportedAssets: [{ asset: CELO_SEPOLIA_USDC, symbol: 'USDC', decimals: 6, name: 'USDC', version: '2', assetTransferMethod: 'eip3009' }],
             },
           },
         ],

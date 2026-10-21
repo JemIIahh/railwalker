@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { ASSETS, CELO_MAINNET, CELO_SEPOLIA, assetByAddress, chainIdOf } from '../src/assets';
+import { ASSETS, CELO_MAINNET, CELO_SEPOLIA, ZERO_ADDRESS, assetByAddress, chainIdOf } from '../src/assets';
 
 describe('assets', () => {
   test('table matches the spec', () => {
@@ -27,6 +27,10 @@ describe('assets', () => {
     expect(chainIdOf('eip155:42220')).toBe(42220);
     expect(chainIdOf('eip155:11142220')).toBe(11142220);
     expect(chainIdOf('base')).toBeNull();
+  });
+
+  test('the zero address is the 20-byte zero address', () => {
+    expect(ZERO_ADDRESS).toBe(`0x${'0'.repeat(40)}`);
   });
 
   test('the chain-id constants are the ones chainIdOf resolves to', () => {

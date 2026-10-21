@@ -1,5 +1,5 @@
 import { isAddress } from 'viem';
-import { ASSETS, CELO_MAINNET, CELO_SEPOLIA, type AssetSymbol } from './assets';
+import { ASSETS, CELO_MAINNET, CELO_SEPOLIA, ZERO_ADDRESS, type AssetSymbol } from './assets';
 import type { Accept, Challenge } from './challenge';
 import { makeFinding, type Finding, type FindingCode } from './findings';
 
@@ -8,7 +8,6 @@ export interface LintContext {
   agentWallet?: string | null;
 }
 
-const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 const POSITIVE_INTEGER = /^[1-9]\d*$/;
 /** Celo's buyer default: payments above $1 of a default asset are refused unless the buyer raises the cap. */
 const DEFAULT_BUYER_CAP_ATOMIC = 1_000_000n;

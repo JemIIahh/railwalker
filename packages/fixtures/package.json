@@ -1,0 +1,26 @@
+{
+  "name": "@railwalker/fixtures",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@railwalker/core": "workspace:*",
+    "@x402/core": "2.28.0",
+    "@x402/evm": "2.28.0",
+    "@x402/hono": "2.28.0",
+    "hono": "4.13.13",
+    "viem": "2.57.7"
+  },
+  "devDependencies": {
+    "@railwalker/chain": "workspace:*",
+    "@railwalker/scanner": "workspace:*",
+    "@railwalker/testkit": "workspace:*"
+  }
+}

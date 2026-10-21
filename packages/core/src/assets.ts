@@ -118,6 +118,10 @@ export function assetByAddress(address: string): AssetInfo | null {
 export const CELO_MAINNET = 42220;
 export const CELO_SEPOLIA = 11142220;
 
+export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+/** Celo Sepolia (sandbox) USDC: the one asset buy's sandbox accept and the Sepolia fixtures use. Never paid by the mainnet buyer. */
+export const CELO_SEPOLIA_USDC = '0x01C5C0122039549AD1493B8220cABEdD739BC44E';
+
 const CHAIN_IDS = new Map<string, number>([
   ['celo', CELO_MAINNET],
   ['eip155:42220', CELO_MAINNET],

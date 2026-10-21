@@ -9,6 +9,7 @@ import {
   CELO_MAINNET,
   DeadlineExceeded,
   RAILWALKER_USER_AGENT,
+  ZERO_ADDRESS,
   chainIdOf,
   createDeadline,
   parseSafeUrl,
@@ -75,7 +76,6 @@ export interface PayOutcome {
 const DEFAULT_MAX_BODY_BYTES = 262_144;
 /** Spend-control ceiling for default assets with no per-asset entry; the per-request `maxAtomic` is the real cap. */
 const USD_CEILING = '$0.05';
-const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 const TX_HASH = /^0x[0-9a-fA-F]{64}$/;
 const PAYLOAD_ERROR_PREFIX = 'Failed to create payment payload: ';
 /** What the x402 client throws when no accept survives its filters; nothing was paid. */

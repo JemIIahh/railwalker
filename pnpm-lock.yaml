@@ -62,6 +62,37 @@ importers:
         specifier: workspace:*
         version: link:../testkit
 
+  packages/fixtures:
+    dependencies:
+      '@railwalker/core':
+        specifier: workspace:*
+        version: link:../core
+      '@x402/core':
+        specifier: 2.28.0
+        version: 2.28.0
+      '@x402/evm':
+        specifier: 2.28.0
+        version: 2.28.0(typescript@7.0.2)
+      '@x402/hono':
+        specifier: 2.28.0
+        version: 2.28.0(hono@4.13.13)(typescript@7.0.2)
+      hono:
+        specifier: 4.13.13
+        version: 4.13.13
+      viem:
+        specifier: 2.57.7
+        version: 2.57.7(typescript@7.0.2)(zod@4.6.7)
+    devDependencies:
+      '@railwalker/chain':
+        specifier: workspace:*
+        version: link:../chain
+      '@railwalker/scanner':
+        specifier: workspace:*
+        version: link:../scanner
+      '@railwalker/testkit':
+        specifier: workspace:*
+        version: link:../testkit
+
   packages/scanner:
     dependencies:
       '@railwalker/chain':
