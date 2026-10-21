@@ -142,6 +142,13 @@ const isUint256 = (s: string): boolean => s.length <= 78 && /^(0|[1-9]\d*)$/.tes
 export const DiscoveryStateSchema = z.strictObject({ nextId: z.string().refine(isUint256, 'not a uint256 written in decimal') });
 export type DiscoveryState = z.infer<typeof DiscoveryStateSchema>;
 
+/** `METHOD https://…`: an endpoint that is public, like one of our fixtures or a buy route. A hashed seller key cannot be written here. */
+const publicEndpointKey = z.string().regex(/^(GET|POST) https:\/\/\S{1,2048}$/);
+
+/** When each public endpoint was last tried, so the batch runner takes them in turn instead of trying the same ones every run. */
+export const RotationStateSchema = z.strictObject({ lastTried: z.record(publicEndpointKey, iso) });
+export type RotationState = z.infer<typeof RotationStateSchema>;
+
 // The schemas stand in for types defined in other packages. If either side changes without the other, these stop compiling.
 type Assert<_T extends true> = true;
 type Fits<From, To> = [From] extends [To] ? true : false;

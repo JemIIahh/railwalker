@@ -1,0 +1,81 @@
+name: Runner
+
+# The scheduled mystery shopper: it scans for free, pays a few targets, and commits aggregate-only data to the `data` branch.
+# Only `schedule` and `workflow_dispatch` start it. No pull request can: a fork or a pull request never gets the secrets below.
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Two runs at once would spend from the same wallet twice against caps that each only know about its own run.
+concurrency:
+  group: railwalker-runner
+  cancel-in-progress: false
+
+jobs:
+  run:
+    # A copy of this file in a fork has no secrets and no business running.
+    if: github.repository == 'JemIIahh/railwalker'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.22.2'
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # An orphan branch with its own history: nothing but data, so nothing here can be mistaken for code.
+      - name: Check out the data branch (it is created on the first run)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          auth="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\n')"
+          remote="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
+          if git -c http.extraheader="$auth" ls-remote --exit-code --heads "$remote" data > /dev/null; then
+            git -c http.extraheader="$auth" clone --depth 1 --branch data "$remote" data
+          else
+            git init --initial-branch=data data
+            git -C data remote add origin "$remote"
+            printf '# Railwalker data\n\nWritten by the scheduled runner (.github/workflows/runner.yml on the default branch).\nAggregate counts and our own endpoints only: nothing here names a seller nobody asked us to look at.\n' > data/README.md
+          fi
+
+      # The only step that holds the wallet key. The token above is not in its environment.
+      - name: Run the batch
+        env:
+          AGENT_PRIVATE_KEY: ${{ secrets.AGENT_PRIVATE_KEY }}
+          RAILWALKER_ATTRIBUTION_CODE: ${{ secrets.RAILWALKER_ATTRIBUTION_CODE }}
+          SELLER_SALT: ${{ secrets.SELLER_SALT }}
+          RAILWALKER_NETWORK: mainnet
+          RAILWALKER_FIXTURES_URL: ${{ vars.RAILWALKER_FIXTURES_URL }}
+        run: pnpm --filter @railwalker/cli start run-batch --data ./data
+
+      - name: Publish the data
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cd data
+          git add --all
+          if git diff --cached --quiet; then
+            echo "Nothing changed."
+            exit 0
+          fi
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit --message "data: run of $(date -u +%Y-%m-%dT%H:%MZ)"
+          auth="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\n')"
+          git -c http.extraheader="$auth" push origin HEAD:data

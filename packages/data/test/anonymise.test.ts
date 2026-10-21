@@ -2,7 +2,7 @@ import { createHmac } from 'node:crypto';
 import { describe, expect, test } from 'vitest';
 import { FINDING_ORDER } from '@railwalker/core';
 import type { CheckReport } from '@railwalker/scanner';
-import { publicReport, publicRun, sellerKeyOf, summarize, ScanSummarySchema } from '../src';
+import { publicReport, publicRun, sellerKeyFor, sellerKeyOf, summarize, ScanSummarySchema } from '../src';
 import { payToFor, reportFor, runOf } from './support';
 
 const NOW = new Date('2026-10-22T12:00:00Z');
@@ -220,5 +220,31 @@ describe('summarize: counting rules', () => {
     const copy = publicReport(report, 'fixture')!;
     copy.endpoint.url = 'https://changed.example/';
     expect(report.endpoint.url).toBe('https://seller.example/api/data');
+  });
+});
+
+describe('sellerKeyFor: the name the spend ledger knows a seller by', () => {
+  const SALT = 'a-long-secret-salt-1234';
+
+  test.each(['fixture', 'buy'] as const)('a %s seller is public, so its key is its host, written the one way', (stage) => {
+    expect(sellerKeyFor(stage, 'Gateway.UseBuy.AI.', SALT)).toBe('gateway.usebuy.ai');
+    expect(sellerKeyFor(stage, 'gateway.usebuy.ai', '')).toBe('gateway.usebuy.ai'); // no salt is needed for a public name
+  });
+
+  test.each(['unsolicited', 'customer'] as const)('a %s seller is private, so its key is the salted hash and never contains the host', (stage) => {
+    const key = sellerKeyFor(stage, 'Seller.Example.', SALT);
+    expect(key).toBe(sellerKeyOf('seller.example', SALT));
+    expect(key).toMatch(/^[0-9a-f]{16}$/);
+    expect(key).not.toContain('seller');
+  });
+
+  test('a private seller needs a salt: without one the key would be a plain hash of a guessable host', () => {
+    expect(() => sellerKeyFor('unsolicited', 'seller.example', '')).toThrow(/salt/);
+    expect(() => sellerKeyFor('customer', 'seller.example', '')).toThrow(/salt/);
+  });
+
+  test('the same private host always gets the same key, whichever way it is written, and another salt gives another key', () => {
+    expect(sellerKeyFor('unsolicited', 'SELLER.example', SALT)).toBe(sellerKeyFor('unsolicited', 'seller.example.', SALT));
+    expect(sellerKeyFor('unsolicited', 'seller.example', 'another-long-salt-9876')).not.toBe(sellerKeyFor('unsolicited', 'seller.example', SALT));
   });
 });

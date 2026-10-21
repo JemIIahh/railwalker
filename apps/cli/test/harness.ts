@@ -1,7 +1,9 @@
 import { loadConfig } from '@railwalker/chain';
-import { ASSETS, emptySpendState, type SpendState, type Verdict } from '@railwalker/core';
+import { ASSETS, emptySpendState, type SpendLedger, type SpendState, type Verdict } from '@railwalker/core';
+import type { DataStore, DiscoveryState } from '@railwalker/data';
+import type { Endpoint } from '@railwalker/discovery';
 import { fakeFetch, v2MultiAssetChallenge } from '@railwalker/testkit';
-import { scanEndpoint, type CheckReport, type ConfirmOptions, type RunRecord, type ScanRequest } from '@railwalker/scanner';
+import { RunRecorder, scanEndpoint, type CheckReport, type ConfirmOptions, type RunRecord, type ScanRequest } from '@railwalker/scanner';
 import { privateKeyToAddress } from 'viem/accounts';
 import { runCli, type Balances, type CliDeps, type RegisterResult } from '../src';
 
@@ -46,11 +48,48 @@ export function confirmedFrom(report: CheckReport, assets: string[], spend: Spen
   return { report: { ...report, verdicts }, run, spend: { ...spend, totalUsd: spend.totalUsd + usd } };
 }
 
+/** A store that lives in memory, so a command can be tested without a disk. */
+export function memoryStore(initial: Record<string, string> = {}): DataStore & { files: Map<string, string> } {
+  const files = new Map(Object.entries(initial));
+  return {
+    files,
+    read: async (path) => files.get(path) ?? null,
+    write: async (path, content) => void files.set(path, content),
+    list: async (prefix) => [...files.keys()].filter((k) => k.startsWith(prefix)).sort(),
+  };
+}
+
+/** What a confirmation through a shared ledger returns for a payment that worked: the ledger is asked first, as the real one does. */
+export async function confirmedThrough(ledger: SpendLedger, sellerKey: string, report: CheckReport, opts: ConfirmOptions, now: Date) {
+  const symbol = opts.assets[0]!;
+  const decision = await ledger.reserve({ stage: opts.stage, sellerKey, priceUsd: 0.005, readStyle: true, optedOut: false, balanceUsd: 2, now });
+  const rec = new RunRecorder(() => now, opts.stage, { url: report.endpoint.url, method: report.endpoint.method });
+  if (!decision.allow) {
+    rec.step('wallet', false, `${symbol}: payment refused (${decision.reason})`, { reason: decision.reason });
+    const verdicts: Verdict[] = [{ kind: 'SKIPPED', code: decision.reason, basis: 'PREDICTED', assetSymbol: symbol, findings: [] }];
+    return { report: { ...report, verdicts }, run: rec.finish(verdicts) };
+  }
+  const accept = report.challenge!.accepts.find((a) => a.assetInfo?.symbol === symbol)!;
+  rec.step('settle', true, `${symbol}: settled`);
+  rec.payment({ asset: ASSETS[symbol].address, symbol, amountAtomic: accept.amountAtomic, payTo: accept.payTo, txHash: `0x${'ab'.repeat(32)}` });
+  const verdicts: Verdict[] = [{ kind: 'PASS', basis: 'CONFIRMED', assetSymbol: symbol, findings: [] }];
+  return { report: { ...report, verdicts }, run: rec.finish(verdicts) };
+}
+
 /** 5 USA₮ and nothing else: what the faucet gives. */
 export const FAUCET: Balances = { celo: 0n, USDC: 0n, USDT: 0n, USAT: 2_000_000n };
 
-export function harness(over: Partial<CliDeps> & { env?: Record<string, string | undefined>; files?: Record<string, string> } = {}) {
-  const { env = MAINNET_ENV, files: initial = {}, ...rest } = over;
+export function harness(
+  over: Partial<CliDeps> & {
+    env?: Record<string, string | undefined>;
+    files?: Record<string, string>;
+    /** What openStore hands back. */
+    store?: ReturnType<typeof memoryStore>;
+    /** What discover finds. */
+    found?: { endpoints: Endpoint[]; cursor?: DiscoveryState; problems?: string[] };
+  } = {},
+) {
+  const { env = MAINNET_ENV, files: initial = {}, store = memoryStore(), found = { endpoints: [] }, ...rest } = over;
   const files = new Map<string, { data: string; mode?: number }>(Object.entries(initial).map(([p, data]) => [p, { data }]));
   const out: string[] = [];
   const err: string[] = [];
@@ -60,6 +99,9 @@ export function harness(over: Partial<CliDeps> & { env?: Record<string, string |
     readBalances: 0,
     confirm: [] as { cfg: unknown; opts: ConfirmOptions; spend: SpendState }[],
     register: [] as { cfg: unknown; meta: unknown; opts: unknown }[],
+    confirmThrough: [] as { cfg: unknown; ledger: SpendLedger; sellerKey: string; report: CheckReport; opts: ConfirmOptions }[],
+    openStore: [] as string[],
+    discover: [] as { cursor: DiscoveryState; fixturesUrl?: string }[],
   };
 
   const deps: CliDeps = {
@@ -95,6 +137,18 @@ export function harness(over: Partial<CliDeps> & { env?: Record<string, string |
       calls.confirm.push({ cfg, opts, spend });
       return confirmedFrom(report, opts.assets, spend, 0.005);
     },
+    confirmThrough: async (cfg, ledger, sellerKey, report, opts) => {
+      calls.confirmThrough.push({ cfg, ledger, sellerKey, report, opts });
+      return confirmedThrough(ledger, sellerKey, report, opts, new Date('2026-10-22T12:00:00Z'));
+    },
+    openStore: (dir) => {
+      calls.openStore.push(dir);
+      return store;
+    },
+    discover: async (_cfg, cursor, o) => {
+      calls.discover.push({ cursor, ...(o.fixturesUrl === undefined ? {} : { fixturesUrl: o.fixturesUrl }) });
+      return { endpoints: found.endpoints, cursor: found.cursor ?? cursor, problems: found.problems ?? [] };
+    },
     register: async (cfg, meta, opts) => {
       calls.register.push({ cfg, meta, opts });
       return { hash: `0x${'12'.repeat(32)}`, agentId: 7n, tagged: [CODE] } satisfies RegisterResult;
@@ -103,7 +157,7 @@ export function harness(over: Partial<CliDeps> & { env?: Record<string, string |
   };
 
   const run = (...argv: string[]) => runCli(argv, deps);
-  return { deps, files, calls, run, out: () => out.join(''), err: () => err.join(''), all: () => out.join('') + err.join('') };
+  return { deps, files, store, calls, run, out: () => out.join(''), err: () => err.join(''), all: () => out.join('') + err.join('') };
 }
 
 export { emptySpendState, ASSETS };

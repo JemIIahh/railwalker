@@ -3,7 +3,8 @@ import { ConfigError } from '@railwalker/chain';
 import { fakeFetch } from '@railwalker/testkit';
 import { scanEndpoint, type CheckReport } from '@railwalker/scanner';
 import { ASSETS, emptySpendState, type SpendState } from '@railwalker/core';
-import { CODE, FAUCET, KEY, MAINNET_ENV, SEPOLIA_ENV, URL_OK, challengeWith, confirmedFrom, harness, scanReport } from './harness';
+import { sellerKeyFor } from '@railwalker/data';
+import { CODE, FAUCET, KEY, MAINNET_ENV, SALT, SEPOLIA_ENV, URL_OK, challengeWith, confirmedFrom, harness, scanReport } from './harness';
 
 const SPEND_PATH = '/work/data/spend.json';
 const ARGS = ['check', URL_OK, '--assets', 'USAT', '--stage', 'buy'];
@@ -133,10 +134,17 @@ describe('check: the policy is applied before anything is paid', () => {
   });
 
   test('an unsolicited seller that already took three settlements is refused, from the saved spend state', async () => {
-    const spend: SpendState = { ...emptySpendState(), settlementsBySeller: { 'seller.example': 3 } };
+    const spend: SpendState = { ...emptySpendState(), settlementsBySeller: { [sellerKeyFor('unsolicited', 'seller.example', SALT)]: 3 } };
     const h = harness({ files: { [SPEND_PATH]: JSON.stringify(spend) } });
     expect(await h.run('check', URL_OK, '--assets', 'USAT', '--stage', 'unsolicited', '--yes')).toBe(3);
     expect(h.err()).toContain('seller_settlement_limit');
+  });
+
+  test('an unsolicited seller is known by a salted key, not its host: a count saved under the plain host does not count', async () => {
+    const spend: SpendState = { ...emptySpendState(), settlementsBySeller: { 'seller.example': 3 } };
+    const h = harness({ files: { [SPEND_PATH]: JSON.stringify(spend) } });
+    expect(await h.run('check', URL_OK, '--assets', 'USAT', '--stage', 'unsolicited', '--yes')).toBe(0);
+    expect(h.calls.confirm).toHaveLength(1);
   });
 
   test('a peso asset with no rate is refused as unpriced, and the priced asset is still checked', async () => {

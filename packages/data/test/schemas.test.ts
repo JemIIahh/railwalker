@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import type { CheckReport, RunRecord } from '@railwalker/scanner';
 import type { SpendState } from '@railwalker/core';
-import { CheckReportSchema, DiscoveryStateSchema, RunRecordSchema, ScanSummarySchema, SpendStateSchema, type ScanSummary } from '../src';
+import { CheckReportSchema, DiscoveryStateSchema, RotationStateSchema, RunRecordSchema, ScanSummarySchema, SpendStateSchema, type ScanSummary } from '../src';
 import { reportFor, runOf } from './support';
 
 const clone = <T>(v: T): T => structuredClone(v);
@@ -221,5 +221,31 @@ describe('DiscoveryStateSchema: hostile cursors are rejected, never thrown', () 
   ])('%s', (_name, nextId) => {
     expect(() => DiscoveryStateSchema.safeParse({ nextId })).not.toThrow();
     expect(DiscoveryStateSchema.safeParse({ nextId }).success).toBe(false);
+  });
+});
+
+describe('RotationStateSchema: when each public endpoint was last tried', () => {
+  const at = '2026-10-22T12:00:00.000Z';
+  const ok = { lastTried: { 'POST https://gateway.usebuy.ai/v1/social/x/posts/search': at, 'GET https://fixtures.example/api/fixtures/ok': at } };
+
+  test('accepts public endpoints keyed by method and https URL, and an empty table', () => {
+    expect(RotationStateSchema.parse(ok)).toEqual(ok);
+    expect(RotationStateSchema.safeParse({ lastTried: {} }).success).toBe(true);
+  });
+
+  test.each([
+    ['a seller key (the sixteen hex characters of a hashed host): only public endpoints belong here', { lastTried: { '0123456789abcdef': at } }],
+    ['a bare URL without its method', { lastTried: { 'https://gateway.usebuy.ai/v1/x': at } }],
+    ['a method that is not GET or POST', { lastTried: { 'DELETE https://gateway.usebuy.ai/v1/x': at } }],
+    ['a lower-case method', { lastTried: { 'post https://gateway.usebuy.ai/v1/x': at } }],
+    ['a URL that is not https', { lastTried: { 'GET http://gateway.usebuy.ai/v1/x': at } }],
+    ['a key with a space or newline in the URL', { lastTried: { 'GET https://gateway.usebuy.ai/v1/x y': at } }],
+    ['a URL over 2048 characters', { lastTried: { [`GET https://gateway.usebuy.ai/${'x'.repeat(2100)}`]: at } }],
+    ['a time that is not ISO', { lastTried: { 'GET https://gateway.usebuy.ai/v1/x': 'yesterday' } }],
+    ['a time that is a number', { lastTried: { 'GET https://gateway.usebuy.ai/v1/x': 1761134400000 } }],
+    ['a missing table', {}],
+    ['an extra field', { ...ok, privateKey: 'x' }],
+  ])('rejects %s', (_name, value) => {
+    expect(RotationStateSchema.safeParse(value).success).toBe(false);
   });
 });

@@ -15,14 +15,24 @@ import {
 import type { CheckReport, RunRecord } from '@railwalker/scanner';
 import type { ScanSummary } from './schemas';
 
+/** A host written the one way: hosts are not case sensitive, and a name may end in the root dot. */
+const normaliseHost = (host: string): string => host.toLowerCase().replace(/\.$/, '');
+
 /**
  * A seller's host, made unrecognisable without the salt: HMAC-SHA256 keyed with the salt, first 16 hex characters.
  * The same host gives the same key (so limits and counts still work), but nobody holding only the key can find the host.
  */
 export function sellerKeyOf(host: string, salt: string): string {
   if (!salt) throw new Error('sellerKeyOf needs a salt: without one the key is a plain hash of a guessable host');
-  const normalised = host.toLowerCase().replace(/\.$/, '');
-  return createHmac('sha256', salt).update(normalised).digest('hex').slice(0, 16);
+  return createHmac('sha256', salt).update(normaliseHost(host)).digest('hex').slice(0, 16);
+}
+
+/**
+ * The key the spend ledger knows a seller by: the host itself for the stages we publish by name (our fixtures, buy), and the
+ * salted hash for everyone else, so no private seller's host can reach a file that is committed to the public data branch.
+ */
+export function sellerKeyFor(stage: Stage, host: string, salt: string): string {
+  return isPublicStage(stage) ? normaliseHost(host) : sellerKeyOf(host, salt);
 }
 
 /**

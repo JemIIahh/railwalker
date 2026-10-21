@@ -4,6 +4,7 @@ import { balance } from './commands/balance';
 import { checkCommand } from './commands/check';
 import { doctor } from './commands/doctor';
 import { registerCommand } from './commands/register';
+import { runBatchCommand } from './commands/run-batch';
 import { scanCommand } from './commands/scan';
 import { walletNew } from './commands/wallet-new';
 import { Refusal, UsageError } from './errors';
@@ -21,6 +22,10 @@ Commands:
         Shows what it would pay and what the policy refuses. Pays only with --yes.
   register [--sepolia|--mainnet] [--yes] [--fee USAT|USDC|USDT] [--web <url>] [--mcp <url>] [--image <uri>]
         Registers the agent's ERC-8004 identity. Permanent, so it needs --yes.
+  run-batch --data <dir> [--dry-run] [--max-paid <n>] [--budget-sec <n>] [--fixtures <https url>]
+        One scheduled run: scans everything for free, pays up to --max-paid targets (default 3) in turn, and writes the saved
+        state, a summary and the public run records to <dir>. Nothing it writes or prints names a seller nobody asked about.
+        --dry-run says what it would pay and writes nothing. RAILWALKER_FIXTURES_URL names our deployed fixtures.
   wallet:new   Creates the agent wallet key in .env and prints the address only.
   doctor       Checks the configuration, the attribution code and the balance.
   balance      Shows the agent wallet's balances.
@@ -74,6 +79,8 @@ export async function runCli(argv: string[], deps: CliDeps): Promise<number> {
         return await checkCommand(ctx, parsed);
       case 'register':
         return await registerCommand(ctx, parsed);
+      case 'run-batch':
+        return await runBatchCommand(ctx, parsed);
       default:
         ctx.err(`railwalker: unknown command "${parsed.command}"\nTry: railwalker help\n`);
         return 2;

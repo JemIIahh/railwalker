@@ -1,5 +1,7 @@
 import type { Config, FeeSymbol, RegistrationMeta } from '@railwalker/chain';
-import type { SpendState } from '@railwalker/core';
+import type { SpendLedger, SpendState } from '@railwalker/core';
+import type { DataStore, DiscoveryState } from '@railwalker/data';
+import type { Endpoint } from '@railwalker/discovery';
 import type { CheckReport, ConfirmOptions, RunRecord, ScanRequest } from '@railwalker/scanner';
 
 export interface CliFs {
@@ -46,6 +48,12 @@ export interface CliDeps {
   loadConfig: (overrides?: Record<string, string>) => Config;
   readBalances: (cfg: Config) => Promise<Balances>;
   confirm: (cfg: Config, report: CheckReport, opts: ConfirmOptions, spend: SpendState) => Promise<CheckResult>;
+  /** Pays through a ledger the caller keeps, so everything that pays in one process answers to the same caps. */
+  confirmThrough: (cfg: Config, ledger: SpendLedger, sellerKey: string, report: CheckReport, opts: ConfirmOptions) => Promise<{ report: CheckReport; run: RunRecord }>;
+  /** The data folder: plain files, and in the scheduled workflow a git checkout of the public `data` branch. */
+  openStore: (dir: string) => DataStore;
+  /** Free: what to look at this run, where the registry walk got to, and what went wrong on the way (never naming a seller). */
+  discover: (cfg: Config, cursor: DiscoveryState, o: { fixturesUrl?: string }) => Promise<{ endpoints: Endpoint[]; cursor: DiscoveryState; problems: string[] }>;
   register: (cfg: Config, meta: RegistrationMeta, opts: { fee: FeeSymbol }) => Promise<RegisterResult>;
 }
 

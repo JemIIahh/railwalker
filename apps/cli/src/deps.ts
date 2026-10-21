@@ -1,7 +1,9 @@
 import { access, chmod, mkdir, readFile, writeFile } from 'node:fs/promises';
-import { loadConfig, makeClients, payEndpoint, registerAgent, toAgentUri, buildRegistration, verifySettlementOnChain, verifyTagged, type Config } from '@railwalker/chain';
+import { loadConfig, loadRegistration, makeClients, payEndpoint, registerAgent, toAgentUri, buildRegistration, verifySettlementOnChain, verifyTagged, type Config } from '@railwalker/chain';
 import { ASSETS, DEFAULT_POLICY, SpendLedger } from '@railwalker/core';
-import { confirmEndpoint, defaultScanDeps, scanEndpoint } from '@railwalker/scanner';
+import { FileDataStore, sellerKeyFor } from '@railwalker/data';
+import { discoverEndpoints, fixtureEndpoints } from '@railwalker/discovery';
+import { confirmEndpoint, defaultScanDeps, scanEndpoint, type CheckReport, type ConfirmOptions } from '@railwalker/scanner';
 import { erc20Abi } from 'viem';
 import { generatePrivateKey } from 'viem/accounts';
 import { stablecoinUsd } from './commands/doctor';
@@ -13,6 +15,27 @@ async function readBalances(cfg: Config): Promise<Balances> {
   const token = (symbol: 'USDC' | 'USDT' | 'USAT') => c.publicClient.readContract({ address: ASSETS[symbol].address, abi: erc20Abi, functionName: 'balanceOf', args: [owner] });
   const [celo, USDC, USDT, USAT] = await Promise.all([c.publicClient.getBalance({ address: owner }), token('USDC'), token('USDT'), token('USAT')]);
   return { celo, USDC, USDT, USAT };
+}
+
+/** What one scheduled run spends on finding things: a registry walk and a few registrations, all bounded, under a time budget. */
+const DISCOVERY = { maxIds: 1000, maxRegistrations: 100, concurrency: 8, budgetMs: 120_000 } as const;
+
+/** Pays through a ledger the caller keeps, from the wallet the configuration describes. */
+async function confirmThrough(cfg: Config, ledger: SpendLedger, sellerKey: string, report: CheckReport, opts: ConfirmOptions) {
+  const c = makeClients(cfg);
+  return confirmEndpoint(
+    {
+      pay: (req) => payEndpoint({ account: c.account, publicClient: c.publicClient }, req),
+      verifyTransfer: (a) => verifySettlementOnChain(c.publicClient, a),
+      ledger,
+      payer: c.account.address,
+      sellerKey,
+      balanceUsd: async () => stablecoinUsd(await readBalances(cfg)),
+      now: () => new Date(),
+    },
+    report,
+    opts,
+  );
 }
 
 /** The real thing: the real disk, the real network, and a wallet built from the validated configuration only when a command needs one. */
@@ -39,22 +62,24 @@ export function realDeps(env: Record<string, string | undefined> = process.env, 
     readBalances,
 
     async confirm(cfg, report, opts, spend) {
-      const c = makeClients(cfg);
       const ledger = new SpendLedger(DEFAULT_POLICY, spend);
-      const result = await confirmEndpoint(
-        {
-          pay: (req) => payEndpoint({ account: c.account, publicClient: c.publicClient }, req),
-          verifyTransfer: (a) => verifySettlementOnChain(c.publicClient, a),
-          ledger,
-          payer: c.account.address,
-          sellerKey: new URL(report.endpoint.url).hostname,
-          balanceUsd: async () => stablecoinUsd(await readBalances(cfg)),
-          now: () => new Date(),
-        },
-        report,
-        opts,
-      );
+      const sellerKey = sellerKeyFor(opts.stage, new URL(report.endpoint.url).hostname, cfg.sellerSalt);
+      const result = await confirmThrough(cfg, ledger, sellerKey, report, opts);
       return { ...result, spend: ledger.snapshot() };
+    },
+    confirmThrough,
+
+    openStore: (dir) => new FileDataStore(dir),
+
+    async discover(cfg, cursor, o) {
+      const c = makeClients(cfg);
+      // The fixtures package carries a whole web server: load it only for the command that needs its route list.
+      const fixtures = o.fixturesUrl === undefined ? [] : fixtureEndpoints(o.fixturesUrl, ['/ok', ...Object.keys((await import('@railwalker/fixtures')).FIXTURE_EXPECTATIONS)]);
+      const found = await discoverEndpoints(
+        { fetchImpl: fetch, lister: c.publicClient, cfg, loadRegistration: (uri) => loadRegistration(uri, fetch), now: () => Date.now() },
+        { fixtures, nextId: BigInt(cursor.nextId), ...DISCOVERY },
+      );
+      return { endpoints: found.endpoints, cursor: { nextId: String(found.nextId) }, problems: found.problems };
     },
 
     async register(cfg, meta, opts) {

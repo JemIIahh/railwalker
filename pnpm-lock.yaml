@@ -26,6 +26,15 @@ importers:
       '@railwalker/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@railwalker/data':
+        specifier: workspace:*
+        version: link:../../packages/data
+      '@railwalker/discovery':
+        specifier: workspace:*
+        version: link:../../packages/discovery
+      '@railwalker/fixtures':
+        specifier: workspace:*
+        version: link:../../packages/fixtures
       '@railwalker/scanner':
         specifier: workspace:*
         version: link:../../packages/scanner

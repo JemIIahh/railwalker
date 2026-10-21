@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 import { ASSETS, CELO_MAINNET, DEFAULT_POLICY, STAGES, classifyReadStyle, decidePay, toUsd, type AssetSymbol, type EndpointFacts, type Stage } from '@railwalker/core';
+import { sellerKeyFor } from '@railwalker/data';
 import type { ConfirmOptions } from '@railwalker/scanner';
 import type { Parsed } from '../args';
 import { Refusal, UsageError } from '../errors';
@@ -83,7 +84,7 @@ export async function checkCommand(ctx: Ctx, args: Parsed & { ok: true }): Promi
 
   const facts: EndpointFacts = { url, method, description: challenge.resource.description, source: SOURCE[stage] };
   const { readStyle } = classifyReadStyle(facts);
-  const sellerKey = new URL(url).hostname;
+  const sellerKey = sellerKeyFor(stage, new URL(url).hostname, cfg.sellerSalt); // a salted hash for anyone we do not publish by name
   let spentOnThisCheckUsd = 0;
   const plan: PlanRow[] = assets.map((symbol): PlanRow => {
     const accept = challenge.accepts.find((a) => a.chainId === CELO_MAINNET && a.assetInfo?.symbol === symbol);

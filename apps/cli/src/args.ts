@@ -12,6 +12,7 @@ export const COMMANDS: Record<string, CommandSpec> = {
   scan: { positionals: 1, flags: { method: 'string', body: 'string' } },
   check: { positionals: 1, flags: { assets: 'string', stage: 'string', yes: 'bool', body: 'string', record: 'string', 'fee-paid': 'string', deliveries: 'string' } },
   register: { positionals: 0, flags: { sepolia: 'bool', mainnet: 'bool', yes: 'bool', fee: 'string', web: 'string', mcp: 'string', image: 'string' } },
+  'run-batch': { positionals: 0, flags: { data: 'string', 'dry-run': 'bool', 'max-paid': 'string', 'budget-sec': 'string', fixtures: 'string' } },
 };
 
 export type Parsed =

@@ -56,6 +56,6 @@ describe('parseArgs', () => {
   });
 
   test('the command table is the plan’s command set', () => {
-    expect(Object.keys(COMMANDS).sort()).toEqual(['balance', 'check', 'doctor', 'register', 'scan', 'wallet:new']);
+    expect(Object.keys(COMMANDS).sort()).toEqual(['balance', 'check', 'doctor', 'register', 'run-batch', 'scan', 'wallet:new']);
   });
 });
