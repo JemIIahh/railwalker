@@ -1,15 +1,13 @@
 import { isAddress } from 'viem';
-import { ASSETS, type AssetSymbol } from './assets';
+import { ASSETS, CELO_MAINNET, CELO_SEPOLIA, type AssetSymbol } from './assets';
 import type { Accept, Challenge } from './challenge';
-import { FINDING_SEVERITY, type Finding, type FindingCode } from './findings';
+import { makeFinding, type Finding, type FindingCode } from './findings';
 
 export interface LintContext {
   /** The agentWallet from the seller's ERC-8004 registration, when known. */
   agentWallet?: string | null;
 }
 
-const MAINNET = 42220;
-const SEPOLIA = 11142220;
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 const POSITIVE_INTEGER = /^[1-9]\d*$/;
 /** Celo's buyer default: payments above $1 of a default asset are refused unless the buyer raises the cap. */
@@ -21,7 +19,7 @@ const ADAPTERS = new Map<string, AssetSymbol>(
 );
 
 function finding(code: FindingCode, message: string, evidence: Record<string, unknown> = {}, assetSymbol?: AssetSymbol): Finding {
-  return { code, severity: FINDING_SEVERITY[code], basis: 'PREDICTED', message, evidence, ...(assetSymbol ? { assetSymbol } : {}) };
+  return makeFinding(code, message, evidence, { assetSymbol });
 }
 
 function lintAccept(a: Accept, challenge: Challenge, ctx: LintContext): Finding[] {
@@ -124,17 +122,17 @@ export function runLints(challenge: Challenge, ctx: LintContext = {}): Finding[]
     out.push(finding('no_accepts', 'The challenge lists no payment options.'));
   } else {
     const networks = accepts.map((a) => a.network);
-    if (!accepts.some((a) => a.chainId === MAINNET)) {
+    if (!accepts.some((a) => a.chainId === CELO_MAINNET)) {
       out.push(finding('no_mainnet_accept', 'No accept is on Celo mainnet (eip155:42220).', { networks }));
     }
-    if (accepts.some((a) => a.chainId === SEPOLIA)) {
+    if (accepts.some((a) => a.chainId === CELO_SEPOLIA)) {
       out.push(finding('testnet_entry_present', 'A Celo Sepolia (sandbox) accept is mixed into the production challenge. It is never paid.', { networks }));
     }
     if (accepts.some((a) => a.chainId === null)) {
       out.push(finding('wrong_network', 'Some accepts are on networks other than Celo; only Celo mainnet accepts are considered.', { networks }));
     }
     for (const a of accepts) {
-      if (a.chainId === MAINNET) out.push(...lintAccept(a, challenge, ctx));
+      if (a.chainId === CELO_MAINNET) out.push(...lintAccept(a, challenge, ctx));
     }
   }
 

@@ -115,11 +115,14 @@ export function assetByAddress(address: string): AssetInfo | null {
   return BY_ADDRESS.get(address.toLowerCase()) ?? null;
 }
 
+export const CELO_MAINNET = 42220;
+export const CELO_SEPOLIA = 11142220;
+
 const CHAIN_IDS = new Map<string, number>([
-  ['celo', 42220],
-  ['eip155:42220', 42220],
-  ['celo-sepolia', 11142220],
-  ['eip155:11142220', 11142220],
+  ['celo', CELO_MAINNET],
+  ['eip155:42220', CELO_MAINNET],
+  ['celo-sepolia', CELO_SEPOLIA],
+  ['eip155:11142220', CELO_SEPOLIA],
 ]);
 
 /** Celo mainnet or Celo Sepolia only; every other network (including other EVM chains) is null. */

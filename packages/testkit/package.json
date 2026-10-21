@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit -p ."
   },
   "dependencies": {
-    "@railwalker/core": "workspace:*"
+    "@railwalker/core": "workspace:*",
+    "@x402/core": "2.28.0"
   }
 }

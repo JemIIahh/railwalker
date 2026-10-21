@@ -113,3 +113,20 @@ export interface Finding {
   evidence: Record<string, unknown>;
   assetSymbol?: AssetSymbol;
 }
+
+/** The one way findings are built: severity always comes from the table, and the basis defaults to PREDICTED. */
+export function makeFinding(
+  code: FindingCode,
+  message: string,
+  evidence: Record<string, unknown> = {},
+  opts: { assetSymbol?: AssetSymbol; basis?: Basis } = {},
+): Finding {
+  return {
+    code,
+    severity: FINDING_SEVERITY[code],
+    basis: opts.basis ?? 'PREDICTED',
+    message,
+    evidence,
+    ...(opts.assetSymbol ? { assetSymbol: opts.assetSymbol } : {}),
+  };
+}
