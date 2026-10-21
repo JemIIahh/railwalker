@@ -1,0 +1,21 @@
+{
+  "name": "@railwalker/discovery",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@railwalker/chain": "workspace:*",
+    "@railwalker/core": "workspace:*",
+    "viem": "2.57.7"
+  },
+  "devDependencies": {
+    "@railwalker/testkit": "workspace:*"
+  }
+}

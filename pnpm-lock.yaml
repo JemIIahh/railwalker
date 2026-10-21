@@ -143,6 +143,22 @@ importers:
         specifier: workspace:*
         version: link:../testkit
 
+  packages/discovery:
+    dependencies:
+      '@railwalker/chain':
+        specifier: workspace:*
+        version: link:../chain
+      '@railwalker/core':
+        specifier: workspace:*
+        version: link:../core
+      viem:
+        specifier: 2.57.7
+        version: 2.57.7(typescript@7.0.2)(zod@4.6.7)
+    devDependencies:
+      '@railwalker/testkit':
+        specifier: workspace:*
+        version: link:../testkit
+
   packages/fixtures:
     dependencies:
       '@railwalker/core':

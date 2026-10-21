@@ -1,0 +1,639 @@
+{
+  "_recordedFrom": "https://gateway.usebuy.ai/v1/catalog on 2026-10-21; five capabilities copied verbatim, top-level fields trimmed",
+  "service": "buy-gateway",
+  "version": 1,
+  "baseUrl": "https://gateway.usebuy.ai",
+  "catalog": "https://gateway.usebuy.ai/v1/catalog",
+  "capabilities": [
+    {
+      "id": "x.posts.search",
+      "title": "Search X posts",
+      "description": "Search public X posts by keyword or X search expression.",
+      "available": true,
+      "method": "POST",
+      "url": "https://gateway.usebuy.ai/v1/social/x/posts/search",
+      "platform": "x",
+      "agent": {
+        "provider": "tikhub",
+        "agentId": 9895,
+        "agentRegistry": "eip155:42220:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+        "registration": "https://gateway.usebuy.ai/v1/providers/tikhub/agent-registration.json"
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "query"
+        ],
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "X search expression; X operators such as within_time:1d are supported."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "top",
+              "latest",
+              "media",
+              "people",
+              "lists"
+            ],
+            "default": "top"
+          },
+          "cursor": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          }
+        }
+      },
+      "sandboxNetwork": "celo-sepolia",
+      "price": {
+        "usd": "0.005",
+        "atomic": "5000",
+        "tokens": [
+          "USDC",
+          "USDT",
+          "USAT"
+        ],
+        "pricingModel": "per_call"
+      }
+    },
+    {
+      "id": "browser.sessions.create",
+      "title": "Rent an isolated agent browser",
+      "description": "Start a disposable agent-browser session for a fixed number of minutes.",
+      "available": true,
+      "method": "POST",
+      "url": "https://gateway.usebuy.ai/v1/browser/sessions",
+      "platform": "browser",
+      "agent": {
+        "provider": "buy-browser-worker",
+        "agentId": 9894,
+        "agentRegistry": "eip155:42220:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+        "registration": "https://gateway.usebuy.ai/v1/providers/buy-browser-worker/agent-registration.json"
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "durationMinutes"
+        ],
+        "properties": {
+          "durationMinutes": {
+            "type": "integer",
+            "enum": [
+              1,
+              2,
+              3,
+              5,
+              10
+            ],
+            "description": "Paid session length in minutes, starting when the browser is ready."
+          }
+        }
+      },
+      "sandboxNetwork": "celo-sepolia",
+      "priceOptions": [
+        {
+          "durationMinutes": 1,
+          "usd": "0.003606",
+          "atomic": "3606",
+          "tokens": [
+            "USDC",
+            "USDT",
+            "USAT"
+          ]
+        },
+        {
+          "durationMinutes": 2,
+          "usd": "0.004212",
+          "atomic": "4212",
+          "tokens": [
+            "USDC",
+            "USDT",
+            "USAT"
+          ]
+        },
+        {
+          "durationMinutes": 3,
+          "usd": "0.004818",
+          "atomic": "4818",
+          "tokens": [
+            "USDC",
+            "USDT",
+            "USAT"
+          ]
+        },
+        {
+          "durationMinutes": 5,
+          "usd": "0.00603",
+          "atomic": "6030",
+          "tokens": [
+            "USDC",
+            "USDT",
+            "USAT"
+          ]
+        },
+        {
+          "durationMinutes": 10,
+          "usd": "0.00906",
+          "atomic": "9060",
+          "tokens": [
+            "USDC",
+            "USDT",
+            "USAT"
+          ]
+        }
+      ],
+      "pricingModel": "duration"
+    },
+    {
+      "id": "monid.instagram.apify.apify-instagram-hashtag-scraper",
+      "title": "Instagram · Instagram Hashtag Scraper",
+      "description": "Scrape Instagram posts and reels by hashtag or keyword with engagement metrics.",
+      "available": false,
+      "method": "POST",
+      "url": "https://gateway.usebuy.ai/v1/social/instagram/tools/apify-apify-instagram-hashtag-scraper",
+      "platform": "instagram",
+      "agent": {
+        "provider": "apify",
+        "agentId": 9896,
+        "agentRegistry": "eip155:42220:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+        "registration": "https://gateway.usebuy.ai/v1/providers/apify/agent-registration.json"
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "body"
+        ],
+        "properties": {
+          "body": {
+            "type": "object",
+            "description": "This scraper will let you scrape Instagram posts or reels that include the hashtag of your choice. To scrape hashtag results, just type in a <b>#️⃣ Hashtag</b>, choose <b>📝🎞️ What you want to scrape</b>, and the <b>💯 Number of results</b>. Alternatively, you could also choose to scrape by <b>🔎 Keyword instead of hashtag</b>. Then click &#9655;<b> Start </b>, and your data is on its way! <br><br>⚠️ Free usage covers just the first page of results. Upgrade to <a href='https://console.apify.com/billing/current-period' target='_blank' rel='noopener'>Starter plan</a> for full access. If you need any guidance, just <a href='https://apify.it/43PnE99' target='_blank' rel='noopener'>follow this video tutorial</a>. <br><br>🎞️ If you would like to scrape reels in more detail, go for our <a href='https://console.apify.com/actors/xMc5Ga1oCONPmWJIa/input' target='_blank' rel='noopener'>Instagram Reel Scraper</a>. <br>🔥 If you would like to find popular reels by search (new feature), go for our <a href='https://console.apify.com/actors/DrF9mzPPEuVizVF4l/input' target='_blank' rel='noopener'>Instagram Search Scraper</a>. <br>📊 If you would like to discover what other hashtags are out there for your topic + their reach, go for our <a href='https://console.apify.com/actors/cHedUknx10dsaavpI' target='_blank' rel='noopener'>Instagram Analytics Scraper</a>.",
+            "properties": {
+              "hashtags": {
+                "type": "array",
+                "description": "Type in or paste the hashtag with or without <code>#</code> symbol.<br><br> ⚠️ Each hashtag is treated as <strong>one single search term</strong>. If you put several words in one line (e.g. <code>travel photography food</code>), they'll be merged into a single hashtag (<code>#travelphotographyfood</code>). To search for terms separately, add each one as its own entry using the <strong>&#43; Add</strong> button — and use keyword search if you need multi-word phrases. <br><br>🔎 <strong>Searching by keyword?</strong> Add your keywords in this same field, then enable <strong>Scrape with a keyword instead of hashtag</strong> toggle below. You can add as many keywords as you like in one field, space-separated.",
+                "items": {
+                  "type": "string",
+                  "pattern": "^\\s*#?[^!?.,:;\\-+=*&%$#@/\\~^|<>()[\\]{}\"'`]+$"
+                }
+              },
+              "keywordSearch": {
+                "type": "boolean",
+                "description": "Enable this option if you want to get posts or reels by a specific keyword instead of a hashtag. Add your keywords to the <strong>Hashtags or keywords</strong> field above. Unlike with hashtags, <b>multiple words are supported as keywords</b>, just add spaces between them. The dataset will be slightly different than the one produced by hashtag. <a href='https://apify.com/apify/instagram-hashtag-scraper#what-is-the-difference-between-extracting-instagram-data-by-hashtag-and-by-keyword' target='_blank' rel='noopener'>See examples here</a> with the difference between hashtag and keyword extraction."
+              },
+              "resultsType": {
+                "type": "string",
+                "description": "Choose whether to scrape posts or reels for the selected hashtags or keywords.",
+                "enum": [
+                  "posts",
+                  "reels",
+                  "stories"
+                ],
+                "default": "posts"
+              },
+              "resultsLimit": {
+                "type": "integer",
+                "description": "Set the maximum number of results (reels or posts) you want to scrape. If you set this to <code>5</code>, you will scrape 5 posts for each hashtag or keyword you provide. With this setup, if you decide to add <code>7</code> different hashtags or keywords, you will scrape <code>35</code> posts altogether.<br><br>⚠️ Free usage covers just the first page of results. To get more pages, <a href='https://console.apify.com/billing/current-period' target='_blank' rel='noopener'>Upgrade your plan</a>.",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "hashtags"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "sandboxNetwork": "celo-sepolia",
+      "price": {
+        "usd": "0.0068",
+        "atomic": "6800",
+        "tokens": [
+          "USDC",
+          "USDT",
+          "USAT"
+        ],
+        "pricingModel": "per_call"
+      }
+    },
+    {
+      "id": "monid.x.tikhub.api-v1-twitter-web-fetch-community-info",
+      "title": "X · Fetch Community Info",
+      "description": "Get community info",
+      "available": true,
+      "method": "POST",
+      "url": "https://gateway.usebuy.ai/v1/social/x/tools/tikhub-api-v1-twitter-web-fetch-community-info",
+      "platform": "x",
+      "agent": {
+        "provider": "tikhub",
+        "agentId": 9895,
+        "agentRegistry": "eip155:42220:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+        "registration": "https://gateway.usebuy.ai/v1/providers/tikhub/agent-registration.json"
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "queryParams"
+        ],
+        "properties": {
+          "queryParams": {
+            "additionalProperties": false,
+            "type": "object",
+            "properties": {
+              "community_id": {
+                "description": "Community ID",
+                "type": "string"
+              }
+            },
+            "required": [
+              "community_id"
+            ]
+          }
+        }
+      },
+      "sandboxNetwork": "celo-sepolia",
+      "price": {
+        "usd": "0.005",
+        "atomic": "5000",
+        "tokens": [
+          "USDC",
+          "USDT",
+          "USAT"
+        ],
+        "pricingModel": "per_call"
+      }
+    },
+    {
+      "id": "monid.x.apify.apidojo-tweet-scraper",
+      "title": "X · Tweet Scraper",
+      "description": "Scrape X (Twitter) tweets from search queries, profiles, lists, and tweet URLs at scale.",
+      "available": true,
+      "method": "POST",
+      "url": "https://gateway.usebuy.ai/v1/social/x/tools/apify-apidojo-tweet-scraper",
+      "platform": "x",
+      "agent": {
+        "provider": "apify",
+        "agentId": 9896,
+        "agentRegistry": "eip155:42220:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+        "registration": "https://gateway.usebuy.ai/v1/providers/apify/agent-registration.json"
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "body",
+          "maxResults"
+        ],
+        "properties": {
+          "body": {
+            "description": "The last Tweet Scraper you will ever need. Get the results you want with the most powerful Twitter(X) scraper on the market.",
+            "type": "object",
+            "properties": {
+              "startUrls": {
+                "type": "array",
+                "description": "Twitter (X) URLs. Paste the URLs and get the results immediately. Tweet, Profile, Search or List URLs are supported."
+              },
+              "searchTerms": {
+                "type": "array",
+                "description": "Search terms you want to search from Twitter (X). You can refer to https://github.com/igorbrigadir/twitter-advanced-search."
+              },
+              "twitterHandles": {
+                "type": "array",
+                "description": "Twitter handles that you want to search on Twitter (X)"
+              },
+              "conversationIds": {
+                "type": "array",
+                "description": "Conversation IDs that you want to search on Twitter (X)"
+              },
+              "sort": {
+                "type": "string",
+                "description": "Sorts search results. If you are getting low results, try Top instead of Latest. Latest + Top runs both simultaneously to maximize results but may return some duplicate tweets.",
+                "enum": [
+                  "Top",
+                  "Latest",
+                  "Latest + Top"
+                ]
+              },
+              "tweetLanguage": {
+                "type": "string",
+                "description": "Restricts tweets to the given language, given by an ISO 639-1 code.",
+                "enum": [
+                  "ab",
+                  "aa",
+                  "af",
+                  "ak",
+                  "sq",
+                  "am",
+                  "ar",
+                  "an",
+                  "hy",
+                  "as",
+                  "av",
+                  "ae",
+                  "ay",
+                  "az",
+                  "bm",
+                  "ba",
+                  "eu",
+                  "be",
+                  "bn",
+                  "bi",
+                  "bs",
+                  "br",
+                  "bg",
+                  "my",
+                  "ca",
+                  "ch",
+                  "ce",
+                  "ny",
+                  "zh",
+                  "cu",
+                  "cv",
+                  "kw",
+                  "co",
+                  "cr",
+                  "hr",
+                  "cs",
+                  "da",
+                  "dv",
+                  "nl",
+                  "dz",
+                  "en",
+                  "eo",
+                  "et",
+                  "ee",
+                  "fo",
+                  "fj",
+                  "fi",
+                  "fr",
+                  "fy",
+                  "ff",
+                  "gd",
+                  "gl",
+                  "lg",
+                  "ka",
+                  "de",
+                  "el",
+                  "kl",
+                  "gn",
+                  "gu",
+                  "ht",
+                  "ha",
+                  "he",
+                  "hz",
+                  "hi",
+                  "ho",
+                  "hu",
+                  "is",
+                  "io",
+                  "ig",
+                  "id",
+                  "ia",
+                  "ie",
+                  "iu",
+                  "ik",
+                  "ga",
+                  "it",
+                  "ja",
+                  "jv",
+                  "kn",
+                  "kr",
+                  "ks",
+                  "kk",
+                  "km",
+                  "ki",
+                  "rw",
+                  "ky",
+                  "kv",
+                  "kg",
+                  "ko",
+                  "kj",
+                  "ku",
+                  "lo",
+                  "la",
+                  "lv",
+                  "li",
+                  "ln",
+                  "lt",
+                  "lu",
+                  "lb",
+                  "mk",
+                  "mg",
+                  "ms",
+                  "ml",
+                  "mt",
+                  "gv",
+                  "mi",
+                  "mr",
+                  "mh",
+                  "mn",
+                  "na",
+                  "nv",
+                  "nd",
+                  "nr",
+                  "ng",
+                  "ne",
+                  "no",
+                  "nb",
+                  "nn",
+                  "ii",
+                  "oc",
+                  "oj",
+                  "or",
+                  "om",
+                  "os",
+                  "pi",
+                  "ps",
+                  "fa",
+                  "pl",
+                  "pt",
+                  "pa",
+                  "qu",
+                  "ro",
+                  "rm",
+                  "rn",
+                  "ru",
+                  "se",
+                  "sm",
+                  "sg",
+                  "sa",
+                  "sc",
+                  "sr",
+                  "sn",
+                  "sd",
+                  "si",
+                  "sk",
+                  "sl",
+                  "so",
+                  "st",
+                  "es",
+                  "su",
+                  "sw",
+                  "ss",
+                  "sv",
+                  "tl",
+                  "ty",
+                  "tg",
+                  "ta",
+                  "tt",
+                  "te",
+                  "th",
+                  "bo",
+                  "ti",
+                  "to",
+                  "ts",
+                  "tn",
+                  "tr",
+                  "tk",
+                  "tw",
+                  "ug",
+                  "uk",
+                  "ur",
+                  "uz",
+                  "ve",
+                  "vi",
+                  "vo",
+                  "wa",
+                  "cy",
+                  "wo",
+                  "xh",
+                  "yi",
+                  "yo",
+                  "za",
+                  "zu"
+                ]
+              },
+              "onlyVerifiedUsers": {
+                "type": "boolean",
+                "description": "If selected, only returns tweets by users who are verified."
+              },
+              "onlyTwitterBlue": {
+                "type": "boolean",
+                "description": "If selected, only returns tweets by users who are Twitter Blue subscribers."
+              },
+              "onlyImage": {
+                "type": "boolean",
+                "description": "If selected, only returns tweets that contain images."
+              },
+              "onlyVideo": {
+                "type": "boolean",
+                "description": "If selected, only returns tweets that contain videos."
+              },
+              "onlyQuote": {
+                "type": "boolean",
+                "description": "If selected, only returns tweets that are quotes."
+              },
+              "author": {
+                "type": "string",
+                "description": "Returns tweets sent by the given user. It should be a Twitter (X) Handle."
+              },
+              "inReplyTo": {
+                "type": "string",
+                "description": "Returns tweets that are replies to the given user. It should be a Twitter (X) Handle."
+              },
+              "mentioning": {
+                "type": "string",
+                "description": "Returns tweets mentioning the given user. It should be a Twitter (X) Handle."
+              },
+              "geotaggedNear": {
+                "type": "string",
+                "description": "Returns tweets sent near the given location."
+              },
+              "withinRadius": {
+                "type": "string",
+                "description": "Returns tweets sent within the given radius of the given location."
+              },
+              "geocode": {
+                "type": "string",
+                "description": "Returns tweets sent by users located within a given radius of the given latitude/longitude."
+              },
+              "placeObjectId": {
+                "type": "string",
+                "description": "Returns tweets tagged with the given place."
+              },
+              "minimumRetweets": {
+                "type": "integer",
+                "description": "Returns tweets with at least the given number of retweets."
+              },
+              "minimumFavorites": {
+                "type": "integer",
+                "description": "Returns tweets with at least the given number of favorites."
+              },
+              "minimumReplies": {
+                "type": "integer",
+                "description": "Returns tweets with at least the given number of replies."
+              },
+              "start": {
+                "type": "string",
+                "description": "Returns tweets sent after the given date."
+              },
+              "end": {
+                "type": "string",
+                "description": "Returns tweets sent before the given date."
+              },
+              "includeSearchTerms": {
+                "type": "boolean",
+                "description": "If selected, a field will be added to each tweets about the search term that was used to find it."
+              }
+            },
+            "additionalProperties": false
+          },
+          "maxResults": {
+            "type": "integer",
+            "enum": [
+              1,
+              5,
+              10
+            ],
+            "description": "Maximum billable results. The gateway enforces this cap in the provider request; fewer returned results are not prorated."
+          }
+        }
+      },
+      "sandboxNetwork": "celo-sepolia",
+      "priceOptions": [
+        {
+          "maxResults": 1,
+          "usd": "0.0038",
+          "atomic": "3800",
+          "tokens": [
+            "USDC",
+            "USDT",
+            "USAT"
+          ],
+          "prorated": false
+        },
+        {
+          "maxResults": 5,
+          "usd": "0.007",
+          "atomic": "7000",
+          "tokens": [
+            "USDC",
+            "USDT",
+            "USAT"
+          ],
+          "prorated": false
+        },
+        {
+          "maxResults": 10,
+          "usd": "0.011",
+          "atomic": "11000",
+          "tokens": [
+            "USDC",
+            "USDT",
+            "USAT"
+          ],
+          "prorated": false
+        }
+      ],
+      "pricingModel": "fixed_result_bundle"
+    }
+  ]
+}
