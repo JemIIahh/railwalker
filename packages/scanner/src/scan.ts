@@ -1,22 +1,27 @@
 import { createHash } from 'node:crypto';
 import {
   CELO_MAINNET,
+  DeadlineExceeded,
   UnsafeUrlError,
+  createDeadline,
+  discard,
   isPrivateAddress,
   makeFinding,
   parseChallenge,
   parseSafeUrl,
   patchFor,
+  readCapped,
   runLints,
   verdictFromFindings,
   type AssetSymbol,
   type Challenge,
+  type Deadline,
   type Finding,
   type Patch,
   type SkipReason,
   type Verdict,
 } from '@railwalker/core';
-import { DEFAULT_SLOW_MS, DEFAULT_TIMEOUT_MS, MAX_BODY_BYTES, ScanTimeout, createDeadline, discard, readCapped, type Deadline } from './net';
+import { DEFAULT_SLOW_MS, DEFAULT_TIMEOUT_MS, MAX_BODY_BYTES } from './net';
 import type { CheckReport, ScanDeps, ScanRequest } from './types';
 
 const MAX_REDIRECTS = 2;
@@ -85,7 +90,7 @@ async function followRedirects(deps: ScanDeps, req: ScanRequest & { method: 'GET
 
     const location = REDIRECT_STATUSES.has(res.status) ? res.headers.get('location') : null;
     if (location === null) {
-      const read = await readCapped(res, MAX_BODY_BYTES, deadline);
+      const read = await readCapped(res, MAX_BODY_BYTES, deadline, 'refuse');
       if (!read.ok) return skipped('response_too_large');
       return { kind: 'response', status: res.status, headers: Object.fromEntries(res.headers), bodyText: read.text };
     }
@@ -106,7 +111,7 @@ async function followRedirects(deps: ScanDeps, req: ScanRequest & { method: 'GET
 }
 
 function failureFinding(err: unknown, deadline: Deadline): Finding {
-  if (err instanceof ScanTimeout || deadline.hasExpired()) {
+  if (err instanceof DeadlineExceeded || deadline.hasExpired()) {
     return makeFinding('challenge_timeout', 'No complete answer arrived before the scan deadline.');
   }
   const message = (err instanceof Error ? err.message : String(err)).slice(0, 200);
