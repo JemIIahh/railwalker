@@ -7,3 +7,5 @@ export * from './patches';
 export * from './ssrf';
 export * from './safety';
 export * from './policy';
+export * from './shape';
+export * from './independence';
