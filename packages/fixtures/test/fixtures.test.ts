@@ -6,6 +6,7 @@ import { ASSETS, DEFAULT_POLICY, FINDING_ORDER, SpendLedger, emptySpendState, ty
 import { MOCK_TX_HASH, appFetch, mockFacilitator } from '@railwalker/testkit';
 import { payEndpoint } from '@railwalker/chain';
 import { confirmEndpoint, scanEndpoint } from '@railwalker/scanner';
+import { Hono } from 'hono';
 import { DEFAULT_SLOW_MS, FIXTURE_EXPECTATIONS, createFixtureApp, type FixtureDeps } from '../src';
 
 const BASE = 'https://fixtures.example';
@@ -317,5 +318,55 @@ describe('network', () => {
     expect(isAddress(PAY_TO, { strict: true })).toBe(true);
     expect(() => createFixtureApp({ facilitator: mockFacilitator(), payTo: '0x0000000000000000000000000000000000000000', network: 'eip155:42220' })).toThrow(/payTo/);
     expect(() => createFixtureApp({ facilitator: mockFacilitator(), payTo: '0x123' as never, network: 'eip155:42220' })).toThrow(/payTo/);
+  });
+});
+
+describe('mounted under a base path (how the web app serves them)', () => {
+  const MOUNT = '/api/fixtures';
+  function mounted(over: Partial<FixtureDeps> = {}) {
+    const facilitator = mockFacilitator();
+    const app = new Hono().basePath(MOUNT).route('/', createFixtureApp({ facilitator, payTo: PAY_TO, network: 'eip155:42220', ...over }));
+    const fetchImpl = appFetch(app);
+    const scan = (route: string) =>
+      scanEndpoint({ fetchImpl, resolveHost: async () => ['93.184.216.34'], isOptedOut: async () => false, now: () => new Date('2026-10-22T12:00:00Z'), userAgent: 'test' }, { url: `${BASE}${MOUNT}${route}`, method: 'GET' });
+    return { facilitator, fetchImpl, scan, get: (route: string, headers: Record<string, string> = {}) => fetchImpl(`${BASE}${MOUNT}${route}`, { headers }) };
+  }
+
+  test('the correct seller is still a correct seller: a clean scan and a real 402 challenge', async () => {
+    const m = mounted();
+    const res = await m.get('/ok');
+    expect(res.status).toBe(402);
+    expect((await challengeOf(res)).accepts).toHaveLength(3);
+    expect(severe(await m.scan('/ok'))).toEqual([]);
+  });
+
+  test('every route still triggers the finding it is built for, and says so', async () => {
+    const m = mounted();
+    for (const route of BAD) {
+      expect((await m.get(route)).headers.get('x-fixture-expect'), route).toBe(FIXTURE_EXPECTATIONS[route]);
+      expect((await m.scan(route)).findings.map((f) => f.code), route).toContain(FIXTURE_EXPECTATIONS[route]);
+    }
+  });
+
+  test('only the no-cors route is unreadable from a browser, wherever the app is mounted', async () => {
+    const m = mounted();
+    expect((await m.get('/bad/no-cors', { origin: 'https://x.app' })).headers.get('access-control-allow-origin')).toBeNull();
+    for (const route of ['/ok', '/bad/decimals', '/paid/500']) {
+      expect((await m.get(route, { origin: 'https://x.app' })).headers.get('access-control-allow-origin'), route).toBe('*');
+    }
+  });
+
+  test('a real payment still goes through a mounted paid route', async () => {
+    const m = mounted();
+    const o = await payEndpoint({ account, publicClient, fetchImpl: m.fetchImpl }, { url: `${BASE}${MOUNT}/paid/empty`, method: 'GET', asset: 'USAT', maxAtomic: '5000', timeoutMs: 5000 });
+    expect(o).toMatchObject({ paid: true, status: 200, bodyText: '', settlement: { txHash: MOCK_TX_HASH } });
+    expect(m.facilitator).toMatchObject({ verifyCalls: 1, settleCalls: 1 });
+  });
+
+  test('and the correct seller takes a real payment too', async () => {
+    const m = mounted();
+    const o = await payEndpoint({ account, publicClient, fetchImpl: m.fetchImpl }, { url: `${BASE}${MOUNT}/ok`, method: 'GET', asset: 'USDC', maxAtomic: '5000', timeoutMs: 5000 });
+    expect(o).toMatchObject({ paid: true, status: 200 });
+    expect(JSON.parse(o.bodyText)).toEqual({ ok: true });
   });
 });

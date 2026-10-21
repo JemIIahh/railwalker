@@ -1,4 +1,5 @@
 import type { AssetSymbol } from './assets';
+import { clipDeep, clipText } from './clip';
 
 export type Severity = 'error' | 'warn' | 'info';
 export type Basis = 'CONFIRMED' | 'PREDICTED';
@@ -114,7 +115,10 @@ export interface Finding {
   assetSymbol?: AssetSymbol;
 }
 
-/** The one way findings are built: severity always comes from the table, and the basis defaults to PREDICTED. */
+/**
+ * The one way findings are built: severity always comes from the table, and the basis defaults to PREDICTED.
+ * Evidence often quotes what a seller sent, so it is bounded here and nowhere else needs to remember to.
+ */
 export function makeFinding(
   code: FindingCode,
   message: string,
@@ -125,8 +129,8 @@ export function makeFinding(
     code,
     severity: FINDING_SEVERITY[code],
     basis: opts.basis ?? 'PREDICTED',
-    message,
-    evidence,
+    message: clipText(message, 500),
+    evidence: clipDeep(evidence) as Record<string, unknown>,
     ...(opts.assetSymbol ? { assetSymbol: opts.assetSymbol } : {}),
   };
 }

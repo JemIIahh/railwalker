@@ -5,7 +5,7 @@ import { ZERO_ADDRESS, type FindingCode } from '@railwalker/core';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { isAddress } from 'viem';
-import { BAD_ROUTES, registerBadRoutes } from './bad';
+import { BAD_ROUTES, NO_CORS_PATH, registerBadRoutes } from './bad';
 import { goodAssets, PRICE, type FixtureNetwork } from './challenge';
 import { DEFAULT_SLOW_MS, PAID_ROUTES, registerPaidRoutes } from './paid';
 
@@ -23,8 +23,6 @@ export const FIXTURE_EXPECTATIONS: Record<string, FindingCode> = Object.fromEntr
   ...Object.entries(PAID_ROUTES).map(([path, r]) => [path, r.expect]),
 ]);
 
-const CORS_PATHS_WITHOUT = new Set(['/bad/no-cors']);
-
 /**
  * Deterministic x402 sellers for the demo and the tests: one correct (`/ok`), eight that are broken in a way a free scan can see
  * (`/bad/*`, no payment path), and four that take a real payment and then misbehave (`/paid/*`). Anyone can read what each is
@@ -37,9 +35,12 @@ export function createFixtureApp(deps: FixtureDeps): Hono {
 
   const app = new Hono();
 
-  // Browsers must be able to read the 402 and the receipt. The one route that is broken that way is left out on purpose.
-  const allowAnyOrigin = cors({ origin: '*', exposeHeaders: ['payment-required', 'payment-response', 'x-fixture-expect'] });
-  app.use('*', (c, next) => (CORS_PATHS_WITHOUT.has(c.req.path) ? next() : allowAnyOrigin(c, next)));
+  // Hono middleware only wraps the routes registered AFTER it. The one route that is deliberately unreadable from a browser is
+  // therefore registered first, before the CORS middleware, and that holds wherever this app is mounted (a path comparison would not).
+  registerBadRoutes(app, deps, (path) => path === NO_CORS_PATH);
+
+  // Browsers must be able to read the 402 and the receipt of every other route.
+  app.use('*', cors({ origin: '*', exposeHeaders: ['payment-required', 'payment-response', 'x-fixture-expect'] }));
 
   const server = new x402ResourceServer(deps.facilitator).register(deps.network, new ExactEvmScheme());
   const httpServer = new x402HTTPResourceServer(server, {
@@ -74,7 +75,7 @@ export function createFixtureApp(deps: FixtureDeps): Hono {
   app.use(paymentMiddlewareFromHTTPServer(httpServer, undefined, undefined, false));
   app.get('/ok', (c) => c.json({ ok: true }));
 
-  registerBadRoutes(app, deps);
+  registerBadRoutes(app, deps, (path) => path !== NO_CORS_PATH);
   registerPaidRoutes(app, { ...deps, slowMs: deps.slowMs ?? DEFAULT_SLOW_MS });
   return app;
 }

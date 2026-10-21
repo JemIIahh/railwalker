@@ -10,3 +10,4 @@ export * from './policy';
 export * from './shape';
 export * from './independence';
 export * from './http';
+export * from './clip';

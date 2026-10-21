@@ -19,11 +19,16 @@ describe('loadConfig', () => {
       agentPrivateKey: KEY,
       attributionCode: '',
       repoSlug: 'JemIIahh/railwalker',
-      facilitatorUrl: 'https://api.x402.celo.org',
+      facilitatorUrl: 'https://api.x402.sepolia.celo.org',
       payTo: AGENT,
     });
     expect(loadConfig(dev).x402ApiKey).toBeUndefined();
     expect(loadConfig(dev).agentId).toBeUndefined();
+  });
+
+  test('each network has its own hosted facilitator: Celo runs a separate endpoint for Sepolia', () => {
+    expect(loadConfig(dev).facilitatorUrl).toBe('https://api.x402.sepolia.celo.org');
+    expect(loadConfig(prod).facilitatorUrl).toBe('https://api.x402.celo.org');
   });
 
   test('a complete mainnet environment resolves to chain 42220 and the tagged code', () => {

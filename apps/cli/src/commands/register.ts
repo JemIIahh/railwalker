@@ -1,4 +1,4 @@
-import { buildRegistration, feeCurrencyFor, REGISTRIES, type FeeSymbol, type RegistrationMeta } from '@railwalker/chain';
+import { AGENT_DESCRIPTION, AGENT_NAME, buildRegistration, feeCurrencyFor, REGISTRIES, type FeeSymbol, type RegistrationMeta } from '@railwalker/chain';
 import { resolve } from 'node:path';
 import type { Parsed } from '../args';
 import { hasEnvValue, setEnvVar } from '../env-file';
@@ -7,7 +7,6 @@ import type { Ctx } from '../types';
 import { stablecoinUsd } from './doctor';
 
 const FEES: FeeSymbol[] = ['USAT', 'USDC', 'USDT'];
-const DESCRIPTION = 'Mystery shopper for Celo x402 sellers: scans for free, pays what its policy allows, and reports what breaks with exact patches.';
 
 /**
  * Mints the agent's ERC-8004 identity. It is permanent, so it needs --yes, a named network (mainnet must be said even when the
@@ -30,8 +29,8 @@ export async function registerCommand(ctx: Ctx, args: Parsed & { ok: true }): Pr
   if (b[fee] === 0n) throw new Refusal(`the wallet holds no ${fee} to pay gas with: fund it, or pass --fee with a coin it holds (balance ${stablecoinUsd(b).toFixed(4)} USD in stablecoins)`);
 
   const meta: RegistrationMeta = {
-    name: 'Railwalker',
-    description: DESCRIPTION,
+    name: AGENT_NAME,
+    description: AGENT_DESCRIPTION,
     webUrl: typeof args.flags.web === 'string' ? args.flags.web : `https://github.com/${cfg.repoSlug}`,
     ...(typeof args.flags.mcp === 'string' ? { mcpUrl: args.flags.mcp } : {}),
     ...(typeof args.flags.image === 'string' ? { image: args.flags.image } : {}),

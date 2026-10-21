@@ -40,8 +40,13 @@ export const BAD_ROUTES: Record<string, BadRoute> = {
   '/bad/no-cors': { expect: 'cors_missing', accepts: (payTo, network) => goodAccepts(network, payTo) },
 };
 
-export function registerBadRoutes(app: Hono, deps: { payTo: string; network: FixtureNetwork }): void {
+/** The one route a browser cannot read. */
+export const NO_CORS_PATH = '/bad/no-cors';
+
+/** `only` picks which routes to register, so the app can put the unreadable one before its CORS middleware and the rest after. */
+export function registerBadRoutes(app: Hono, deps: { payTo: string; network: FixtureNetwork }, only: (path: string) => boolean = () => true): void {
   for (const [path, route] of Object.entries(BAD_ROUTES)) {
+    if (!only(path)) continue;
     app.get(path, (c) => challenge(c, route.accepts(deps.payTo, deps.network), { expect: route.expect, extensions: route.extensions }));
   }
 }

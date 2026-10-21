@@ -8,3 +8,4 @@ coverage
 .DS_Store
 # Local data directory for the batch runner. Anchored: `packages/data` is a real package.
 /data/
+next-env.d.ts

@@ -35,14 +35,16 @@ export interface Config {
 }
 
 const DEFAULT_REPO = 'JemIIahh/railwalker';
-const DEFAULT_FACILITATOR_URL = 'https://api.x402.celo.org';
 /** A public default would let anyone reverse the hash of an unsolicited seller, so mainnet refuses to use it. */
 const DEV_SELLER_SALT = 'railwalker-dev-salt-not-for-mainnet';
 const MIN_SELLER_SALT_LENGTH = 16;
 
+/** Celo hosts a separate x402 facilitator for each network (docs.celo.org/build/agents/x402). */
+export const FACILITATOR_URLS = { mainnet: 'https://api.x402.celo.org', sepolia: 'https://api.x402.sepolia.celo.org' } as const;
+
 const NETWORKS = {
-  mainnet: { chainId: CELO_MAINNET, rpcUrl: 'https://forno.celo.org' },
-  sepolia: { chainId: CELO_SEPOLIA, rpcUrl: 'https://forno.celo-sepolia.celo-testnet.org' },
+  mainnet: { chainId: CELO_MAINNET, rpcUrl: 'https://forno.celo.org', facilitatorUrl: FACILITATOR_URLS.mainnet },
+  sepolia: { chainId: CELO_SEPOLIA, rpcUrl: 'https://forno.celo-sepolia.celo-testnet.org', facilitatorUrl: FACILITATOR_URLS.sepolia },
 } as const;
 
 const isHttps = (s: string) => {
@@ -111,7 +113,7 @@ export function loadConfig(env: Record<string, string | undefined>): Config {
     agentPrivateKey,
     attributionCode,
     repoSlug: v.RAILWALKER_REPO,
-    facilitatorUrl: DEFAULT_FACILITATOR_URL,
+    facilitatorUrl: network.facilitatorUrl,
     ...(v.X402_API_KEY ? { x402ApiKey: v.X402_API_KEY } : {}),
     payTo: v.SELLER_PAY_TO ? getAddress(v.SELLER_PAY_TO) : privateKeyToAddress(agentPrivateKey),
     sellerSalt: v.SELLER_SALT ?? DEV_SELLER_SALT,

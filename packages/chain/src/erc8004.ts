@@ -101,6 +101,10 @@ const IPFS_GATEWAY = 'https://ipfs.io/ipfs/';
 const IPFS_PATH = /^[A-Za-z0-9]+(\/[A-Za-z0-9._~-]+)*$/;
 const DEFAULT_LOAD_TIMEOUT_MS = 10_000;
 
+/** What the agent calls itself, in one place: the on-chain registration and the site's registration file must agree. */
+export const AGENT_NAME = 'Railwalker';
+export const AGENT_DESCRIPTION = 'Mystery shopper for Celo x402 sellers: scans for free, pays what its policy allows, and reports what breaks with exact patches.';
+
 export interface RegistrationMeta {
   name: string;
   description: string;

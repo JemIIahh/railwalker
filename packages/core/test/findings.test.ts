@@ -15,4 +15,16 @@ describe('makeFinding', () => {
   test('omits assetSymbol entirely when there is none', () => {
     expect('assetSymbol' in makeFinding('v1_challenge', 'legacy')).toBe(false);
   });
+
+  test('a hostile target cannot make a finding large: the message and the evidence are bounded', () => {
+    const f = makeFinding('payto_invalid', 'm'.repeat(5000), { payTo: 'p'.repeat(1_000_000), list: Array.from({ length: 1000 }, (_, i) => i), nested: { a: { b: { c: { d: { e: { f: 'too deep' } } } } } } });
+    expect(f.message.length).toBeLessThanOrEqual(501);
+    expect(JSON.stringify(f.evidence).length).toBeLessThan(2000);
+    expect(f).toMatchObject({ code: 'payto_invalid', severity: 'error', basis: 'PREDICTED' });
+  });
+
+  test('evidence that is already small is kept exactly', () => {
+    const e = { payTo: '0x1111111111111111111111111111111111111111', n: 3, ok: true, missingKeys: ['a', 'b.c'] };
+    expect(makeFinding('payto_invalid', 'bad', e).evidence).toEqual(e);
+  });
 });

@@ -4,7 +4,7 @@ import { parseTransaction } from 'viem/celo';
 import { fromDataSuffix, toDataSuffix } from '@celo/attribution-tags';
 import { RAILWALKER_USER_AGENT } from '@railwalker/core';
 import { fakeFetch } from '@railwalker/testkit';
-import { IDENTITY_ABI, REGISTRIES, REPUTATION_ABI, buildRegistration, feeCurrencyFor, giveFeedback, loadConfig, loadRegistration, makeClients, readAgentWallet, registerAgent, toAgentUri } from '../src';
+import { AGENT_DESCRIPTION, AGENT_NAME, IDENTITY_ABI, REGISTRIES, REPUTATION_ABI, buildRegistration, feeCurrencyFor, giveFeedback, loadConfig, loadRegistration, makeClients, readAgentWallet, registerAgent, toAgentUri } from '../src';
 import { fakeCeloRpc, type ReceiptPlan } from './fake-rpc';
 
 const KEY = `0x${'11'.repeat(32)}` as const;
@@ -87,6 +87,14 @@ describe('buildRegistration', () => {
     ['an image that is a data URL', { image: 'data:image/png;base64,AAAA' }],
   ] as const)('%s is refused: a registration is permanent', (_name, over) => {
     expect(() => buildRegistration({ ...meta, ...over })).toThrow(TypeError);
+  });
+});
+
+describe('the agent identity text', () => {
+  test('is a valid registration as it stands: it is what gets written on chain', () => {
+    const r = buildRegistration({ name: AGENT_NAME, description: AGENT_DESCRIPTION, webUrl: 'https://github.com/JemIIahh/railwalker' });
+    expect(r).toMatchObject({ name: 'Railwalker', description: AGENT_DESCRIPTION });
+    expect(AGENT_DESCRIPTION.length).toBeLessThanOrEqual(1000);
   });
 });
 
