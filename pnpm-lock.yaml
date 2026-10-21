@@ -127,6 +127,22 @@ importers:
         specifier: workspace:*
         version: link:../testkit
 
+  packages/data:
+    dependencies:
+      '@railwalker/core':
+        specifier: workspace:*
+        version: link:../core
+      '@railwalker/scanner':
+        specifier: workspace:*
+        version: link:../scanner
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@railwalker/testkit':
+        specifier: workspace:*
+        version: link:../testkit
+
   packages/fixtures:
     dependencies:
       '@railwalker/core':

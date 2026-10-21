@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import { ASSETS, CELO_MAINNET, DEFAULT_POLICY, classifyReadStyle, decidePay, toUsd, type AssetSymbol, type EndpointFacts, type Stage } from '@railwalker/core';
+import { ASSETS, CELO_MAINNET, DEFAULT_POLICY, STAGES, classifyReadStyle, decidePay, toUsd, type AssetSymbol, type EndpointFacts, type Stage } from '@railwalker/core';
 import type { ConfirmOptions } from '@railwalker/scanner';
 import type { Parsed } from '../args';
 import { Refusal, UsageError } from '../errors';
@@ -9,7 +9,6 @@ import type { Ctx } from '../types';
 import { stablecoinUsd } from './doctor';
 import { parseBody } from './scan';
 
-const STAGES: Stage[] = ['buy', 'fixture', 'customer', 'unsolicited'];
 /** How each stage's seller is classified for the read-style and policy rules. */
 const SOURCE: Record<Stage, EndpointFacts['source']> = { buy: 'buy', fixture: 'fixture', customer: 'visitor', unsolicited: 'erc8004' };
 
@@ -23,7 +22,7 @@ function parseAssets(raw: string | true | undefined): AssetSymbol[] {
 
 function parseStage(raw: string | true | undefined): Stage {
   if (raw === undefined) throw new UsageError(`--stage is required (${STAGES.join(', ')})`);
-  if (!STAGES.includes(raw as Stage)) throw new UsageError(`unknown stage "${raw}": choose from ${STAGES.join(', ')}`);
+  if (!(STAGES as readonly string[]).includes(raw as string)) throw new UsageError(`unknown stage "${raw}": choose from ${STAGES.join(', ')}`);
   return raw as Stage;
 }
 

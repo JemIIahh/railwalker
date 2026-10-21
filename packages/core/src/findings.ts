@@ -91,20 +91,23 @@ export const FINDING_SEVERITY: Record<FindingCode, Severity> = {
 };
 
 /** Reasons a payment was refused by policy. */
-export type DenyReason =
-  | 'not_read_style'
-  | 'opted_out'
-  | 'over_probe_cap'
-  | 'over_endpoint_day_cap'
-  | 'over_event_cap'
-  | 'seller_settlement_limit'
-  | 'price_below_unsolicited_minimum'
-  | 'below_reserve'
-  | 'customer_fee_fraction_exceeded'
-  | 'unpriced_asset';
+export const DENY_REASONS = [
+  'not_read_style',
+  'opted_out',
+  'over_probe_cap',
+  'over_endpoint_day_cap',
+  'over_event_cap',
+  'seller_settlement_limit',
+  'price_below_unsolicited_minimum',
+  'below_reserve',
+  'customer_fee_fraction_exceeded',
+  'unpriced_asset',
+] as const;
+export type DenyReason = (typeof DENY_REASONS)[number];
 
 /** Reasons nothing was scanned or paid at all. */
-export type SkipReason = DenyReason | 'unsafe_url' | 'redirect_blocked' | 'response_too_large';
+export const SKIP_REASONS = [...DENY_REASONS, 'unsafe_url', 'redirect_blocked', 'response_too_large'] as const;
+export type SkipReason = (typeof SKIP_REASONS)[number];
 
 export interface Finding {
   code: FindingCode;

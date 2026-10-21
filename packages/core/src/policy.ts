@@ -23,7 +23,8 @@ export const DEFAULT_POLICY: Policy = {
   customerSpendFraction: 0.5,
 };
 
-export type Stage = 'buy' | 'fixture' | 'customer' | 'unsolicited';
+export const STAGES = ['buy', 'fixture', 'customer', 'unsolicited'] as const;
+export type Stage = (typeof STAGES)[number];
 
 export interface SpendState {
   totalUsd: number;
