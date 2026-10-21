@@ -47,6 +47,11 @@ describe('classifyIndependence', () => {
     expect(classify(wallet({ firstFunder: null }))).toEqual({ counted: true, reason: 'counted' });
   });
 
+  test.each([['not a date'], [''], ['2026-13-45']])('a hackathon start of %j is refused: every wallet with any activity would otherwise be counted as independent', (hackathonStart) => {
+    expect(() => classifyIndependence({ wallet: wallet(), projectWallets: [OURS], hackathonStart })).toThrow(/hackathonStart/);
+    expect(() => classifyIndependence({ wallet: wallet({ address: OURS }), projectWallets: [OURS], hackathonStart })).toThrow(/hackathonStart/);
+  });
+
   test('being a project wallet outranks every other reason', () => {
     expect(classify(wallet({ address: OURS, firstActivityAt: null, firstFunder: OURS })).reason).toBe('is_project_wallet');
   });
