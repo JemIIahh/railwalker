@@ -20,6 +20,12 @@ describe('patchFor', () => {
     expect(patchFor(finding('no_output_schema'))).toBeNull();
   });
 
+  test('a confirmed permit2_allowance_required carries the sponsorship patch: it is that missing extension, seen at runtime', () => {
+    const p = patchFor(finding('permit2_allowance_required', 'wARS'))!;
+    expect(p.code).toBe('permit2_allowance_required');
+    expect(p.after).toContain('eip2612GasSponsoring');
+  });
+
   test('the fee-adapter patch names the token address, not the adapter', () => {
     const p = patchFor(finding('asset_is_fee_adapter', 'USDT'))!;
     expect(p.after).toContain(ASSETS.USDT.address);

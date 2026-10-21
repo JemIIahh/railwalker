@@ -64,6 +64,9 @@ importers:
 
   packages/scanner:
     dependencies:
+      '@railwalker/chain':
+        specifier: workspace:*
+        version: link:../chain
       '@railwalker/core':
         specifier: workspace:*
         version: link:../core

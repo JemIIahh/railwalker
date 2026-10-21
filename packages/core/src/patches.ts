@@ -21,6 +21,7 @@ export function patchFor(f: Finding): Patch | null {
 
   switch (code) {
     case 'permit2_gas_sponsorship_missing':
+    case 'permit2_allowance_required': // the same missing extension, seen by a first-time wallet at payment time
       return {
         code,
         title: 'Declare the gas-sponsorship extension on the route',

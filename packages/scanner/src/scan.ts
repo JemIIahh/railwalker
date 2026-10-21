@@ -154,7 +154,7 @@ function verdictsFor(challenge: Challenge, findings: Finding[]): Verdict[] {
   );
 }
 
-function patchesFor(findings: Finding[]): Patch[] {
+export function patchesFor(findings: Finding[]): Patch[] {
   const seen = new Set<string>();
   const out: Patch[] = [];
   for (const f of findings) {
