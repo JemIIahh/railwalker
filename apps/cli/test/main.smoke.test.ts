@@ -79,7 +79,11 @@ describe('the real program', () => {
     expect(r.stdout).toMatch(/^ok\s+config\s+valid \(sepolia, chain 11142220\)/m);
     expect(r.stdout).toMatch(/^FAIL\s+wallet/m);
     expect(r.code).toBe(1);
-    expect(r.stdout + r.stderr).not.toMatch(LOOKS_LIKE_A_KEY);
+    // The key that wallet:new actually wrote, not anything that looks like one: an error from the chain library can carry 64 hex
+    // characters of calldata, which is not a secret.
+    const key = /AGENT_PRIVATE_KEY=(0x[0-9a-f]{64})/.exec(readFileSync(join(work, '.env'), 'utf8'))![1]!;
+    expect(r.stdout + r.stderr).not.toContain(key);
+    expect(r.stdout + r.stderr).not.toContain(key.slice(2));
     expect(r.stdout + r.stderr).not.toContain('rpc.invalid');
   }, 60_000);
 

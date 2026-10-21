@@ -103,6 +103,28 @@ describe('doctor', () => {
       expect(await h.run('doctor')).toBe(1);
       expect(h.out()).toMatch(/^FAIL\s+wallet.*rpc down/m);
     });
+
+    test('a failure from the chain library is reported by its headline, not its whole dump of the request: no URL, body or calldata', async () => {
+      const dump = Object.assign(new Error('HTTP request failed.\n\nURL: https://rpc.example/v1/SECRETRPCTOKEN\nRequest body: {"data":"0x70a08231000000000000000000000000c969521f471a88afbdd90b9e1f9244c59fc2cae9"}\n\nDetails: fetch failed'), { shortMessage: 'HTTP request failed.' });
+      const h = harness({ readBalances: async () => Promise.reject(dump) });
+      expect(await h.run('doctor')).toBe(1);
+      expect(h.out()).toMatch(/^FAIL\s+wallet.*could not read the balance \(HTTP request failed\.\)/m);
+      expect(h.all()).not.toMatch(/SECRETRPCTOKEN|Request body|70a08231|[0-9a-f]{64}/);
+    });
+
+    test('something that is not an Error being thrown is reported as the text it is', async () => {
+      const h = harness({ readBalances: async () => Promise.reject('plain text failure') });
+      expect(await h.run('doctor')).toBe(1);
+      expect(h.out()).toMatch(/could not read the balance \(plain text failure\)/);
+    });
+
+    test('an empty or non-text shortMessage falls back to the message', async () => {
+      for (const shortMessage of ['', 7, null, undefined]) {
+        const h = harness({ readBalances: async () => Promise.reject(Object.assign(new Error('the real reason'), { shortMessage })) });
+        await h.run('doctor');
+        expect(h.out(), String(shortMessage)).toMatch(/could not read the balance \(the real reason\)/);
+      }
+    });
   });
 
   describe('identity', () => {

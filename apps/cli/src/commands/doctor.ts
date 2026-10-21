@@ -10,7 +10,15 @@ const FLOAT_CAP_USD = 3;
 
 export const stablecoinUsd = (b: Balances) => Number(b.USDC + b.USDT + b.USAT) / 10 ** 6;
 
-const describeError = (err: unknown) => (err instanceof Error ? err.message : String(err));
+/**
+ * The chain library's errors carry a one-line headline in `shortMessage`, and a long message that repeats the request: the URL (an RPC
+ * URL can hold a token), the body, the calldata. A diagnosis needs the headline only.
+ */
+const describeError = (err: unknown): string => {
+  if (!(err instanceof Error)) return String(err);
+  const headline = (err as { shortMessage?: unknown }).shortMessage;
+  return typeof headline === 'string' && headline !== '' ? headline : err.message;
+};
 
 /** Checks what has to be true before anything is sent. Prints one line per check; never a secret, not even where it is only "set". */
 export async function doctor(ctx: Ctx, _args: Parsed): Promise<number> {
