@@ -39,12 +39,12 @@ export function LandingTop({ demo, example = false }: { demo: Outcome[]; example
         <div className="container hero-grid">
           <div className="hero-copy">
             <span className="pill pill-yellow">
-              <Icon name="sparkle" size={14} /> Tests paid APIs on Celo
+              <Icon name="sparkle" size={14} /> Pays APIs in pesos and dollars on Celo
             </span>
             <h1 className="display">
               Does your API really get paid?
             </h1>
-            <p className="lede">Paste a link. Our little bird tries to pay it with real money, then tells you what breaks.</p>
+            <p className="lede">Paste a link. Our little bird pays it with real money, in pesos or dollars, then tells you what breaks.</p>
             <CheckCard state={state} onCheck={(u, m, b) => void scan(u, m, b)} />
           </div>
           <div className="hero-art">
@@ -65,7 +65,7 @@ export function LandingTop({ demo, example = false }: { demo: Outcome[]; example
                 <p>The bird is looking at your link…</p>
               </div>
             ) : (
-              <ScanResult report={state.report} truncated={state.truncated} />
+              <ScanResult report={state.report} truncated={state.truncated} onCheckAs={(m) => void scan(state.report.endpoint.url, m, '')} />
             )}
           </div>
         </section>

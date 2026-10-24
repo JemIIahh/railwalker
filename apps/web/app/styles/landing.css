@@ -76,6 +76,8 @@
 .result-who { flex: 1; min-width: 200px; display: grid; gap: 2px; }
 .result-sentence { font-weight: 650; font-size: 17px; }
 .result-url { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.nopay-ico { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; flex: none; background: color-mix(in srgb, var(--ink) 7%, var(--card)); color: var(--ink-2); }
+.nopay-body { color: var(--ink-2); font-size: 15.5px; line-height: 1.55; max-width: 62ch; }
 .token-results { display: flex; flex-wrap: wrap; gap: 10px; }
 .token-result { display: inline-flex; align-items: center; gap: 10px; padding: 6px 16px 6px 6px; border-radius: 999px; background: color-mix(in srgb, var(--t, var(--idle)) 11%, var(--card)); font-weight: 650; font-size: 14px; }
 .token-state { color: color-mix(in srgb, var(--t, var(--idle)) 70%, var(--ink)); }

@@ -2,6 +2,7 @@
 
 import type { CheckReport } from '@railwalker/scanner';
 import { FINDING_LABELS, FINDING_PLAIN } from '../../lib/labels';
+import { explainNotPaid } from '../../lib/not-paid';
 import { statusOf } from '../../lib/status';
 import { Coin } from '../coin';
 import { CopyButton } from '../copy-button';
@@ -11,20 +12,58 @@ import { useWallet } from '../wallet/wallet-provider';
 
 const ORDER = { AMBIGUOUS: 4, FAIL: 3, PASS_WITH_WARNINGS: 2, PASS: 1, SKIPPED: 0 } as const;
 
+const hostAndPath = (url: string): string => {
+  try {
+    const u = new URL(url);
+    return u.host + u.pathname;
+  } catch {
+    return url; // shown as written
+  }
+};
+
+/** A link that gave no price. Most are not a broken API (a website, a route that only takes POST, a typo), so each says what it is. */
+function NotPaidResult({ report, onCheckAs }: { report: CheckReport; onCheckAs?: (method: 'GET' | 'POST') => void }) {
+  const why = explainNotPaid(report);
+  return (
+    <section className="result" aria-label="Result of the check">
+      <header className="result-head">
+        <span className="nopay-ico">
+          <Icon name="link" size={22} />
+        </span>
+        <div className="result-who">
+          <p className="result-sentence">{why.title}</p>
+          <p className="result-url mono" title={report.endpoint.url}>
+            {report.endpoint.method} {hostAndPath(report.endpoint.url)}
+          </p>
+        </div>
+        <CopyButton text={report.endpoint.url} label="Copy link" />
+      </header>
+      <p className="nopay-body">{why.body}</p>
+      {why.retry !== null && onCheckAs ? (
+        <div className="result-next">
+          <div>
+            <strong>Try it as a {why.retry}</strong>
+            <span>Free. Nothing is paid.</span>
+          </div>
+          <button type="button" className="btn btn-yellow" onClick={() => onCheckAs(why.retry!)}>
+            <Icon name="scan" size={20} />
+            Check as {why.retry}
+          </button>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 /** What a free check found, in plain words: how it did overall, what to fix and how, and what a paid test would add. */
-export function ScanResult({ report, truncated }: { report: CheckReport; truncated: boolean }) {
+export function ScanResult({ report, truncated, onCheckAs }: { report: CheckReport; truncated: boolean; onCheckAs?: (method: 'GET' | 'POST') => void }) {
   const wallet = useWallet();
+  if (report.challenge === null && report.findings.some((f) => f.code === 'not_x402')) return <NotPaidResult report={report} onCheckAs={onCheckAs} />;
   const overall = report.verdicts.reduce((worst, v) => (ORDER[v.kind] > ORDER[worst.kind] ? v : worst), report.verdicts[0] ?? { kind: 'SKIPPED' as const, basis: 'PREDICTED' as const, findings: [] });
   const status = statusOf(overall.kind, overall.basis);
   const issues = report.findings.filter((f) => f.severity !== 'info');
   const notes = new Set(report.findings.filter((f) => f.severity === 'info').map((f) => f.code)).size;
-  let where = report.endpoint.url;
-  try {
-    const u = new URL(report.endpoint.url);
-    where = u.host + u.pathname;
-  } catch {
-    /* shown as written */
-  }
+  const where = hostAndPath(report.endpoint.url);
 
   return (
     <section className="result" aria-label="Result of the check">
