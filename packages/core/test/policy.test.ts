@@ -63,6 +63,14 @@ describe('decidePay', () => {
     expect(decidePay(DEFAULT_POLICY, state(), q({ balanceUsd: 0.1, priceUsd: 0.005 }))).toEqual({ allow: false, reason: 'below_reserve' });
   });
 
+  test('a wallet that does not hold the price in the asset -> insufficient_asset_balance, after the dollar checks; unknown holdings do not block', () => {
+    expect(decidePay(DEFAULT_POLICY, state(), q({ holdsPrice: false }))).toEqual({ allow: false, reason: 'insufficient_asset_balance' });
+    expect(decidePay(DEFAULT_POLICY, state(), q({ holdsPrice: true }))).toEqual({ allow: true });
+    expect(decidePay(DEFAULT_POLICY, state(), q({ holdsPrice: undefined }))).toEqual({ allow: true });
+    // The reason reported is the most fundamental one: a wallet under its reserve says so first.
+    expect(decidePay(DEFAULT_POLICY, state(), q({ holdsPrice: false, balanceUsd: 0.05 }))).toEqual({ allow: false, reason: 'below_reserve' });
+  });
+
   test('customer: fee 0.02, price 0.012 -> customer_fee_fraction_exceeded; price 0.01 allowed; spend so far counts', () => {
     expect(decidePay(DEFAULT_POLICY, state(), q({ stage: 'customer', feePaidUsd: 0.02, priceUsd: 0.012 }))).toEqual({ allow: false, reason: 'customer_fee_fraction_exceeded' });
     expect(decidePay(DEFAULT_POLICY, state(), q({ stage: 'customer', feePaidUsd: 0.02, priceUsd: 0.01 }))).toEqual({ allow: true });

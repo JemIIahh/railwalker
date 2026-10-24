@@ -1,9 +1,8 @@
 import { ASSETS, type FindingCode } from '@railwalker/core';
 import type { Hono } from 'hono';
-import { MAINNET, SEPOLIA, SEPOLIA_USDC, accept, challenge, goodAccepts, type FixtureNetwork, type WireAccept } from './challenge';
+import { MAINNET, SEPOLIA, SEPOLIA_USDC, SPONSORSHIP, accept, challenge, goodAccepts, type FixtureNetwork, type WireAccept } from './challenge';
 
 const ZERO = '0x0000000000000000000000000000000000000000';
-const SPONSORSHIP = { eip2612GasSponsoring: { info: { description: 'The facilitator sponsors the EIP-2612 permit to Permit2.', version: '1' } } };
 
 interface BadRoute {
   expect: FindingCode;

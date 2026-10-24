@@ -6,7 +6,8 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { isAddress } from 'viem';
 import { BAD_ROUTES, NO_CORS_PATH, registerBadRoutes } from './bad';
-import { goodAssets, PRICE, type FixtureNetwork } from './challenge';
+import { ASSETS } from '@railwalker/core';
+import { goodAssets, MAINNET, PESOS, PESO_PRICES, PRICE, SPONSORSHIP, type FixtureNetwork } from './challenge';
 import { DEFAULT_SLOW_MS, PAID_ROUTES, registerPaidRoutes } from './paid';
 
 export interface FixtureDeps {
@@ -54,6 +55,22 @@ export function createFixtureApp(deps: FixtureDeps): Hono {
       description: 'Railwalker fixture: a correct seller',
       mimeType: 'application/json',
     },
+    // The correct seller, in pesos. The pesos exist only on mainnet, so there is no such route anywhere else.
+    ...(deps.network === MAINNET
+      ? {
+          'GET /peso/ok': {
+            accepts: PESOS.map((s) => ({
+              scheme: 'exact',
+              network: deps.network,
+              payTo: deps.payTo,
+              price: { asset: ASSETS[s].address, amount: PESO_PRICES[s], extra: { name: ASSETS[s].eip712Name, version: ASSETS[s].eip712Version, assetTransferMethod: 'permit2' } },
+            })),
+            description: 'Railwalker fixture: a correct seller, in pesos',
+            mimeType: 'application/json',
+            extensions: SPONSORSHIP,
+          },
+        }
+      : {}),
   });
 
   // @x402/hono would start this at construction and process.exit(1) on a fatal configuration error. These fixtures live inside someone
@@ -64,16 +81,19 @@ export function createFixtureApp(deps: FixtureDeps): Hono {
       ready = null; // try again next time rather than cache the failure
       throw err;
     }));
-  app.use('/ok', async (c, next) => {
-    try {
-      await initialise();
-    } catch {
-      return c.json({ error: 'the fixture seller is not ready: its facilitator does not support this network' }, 502);
-    }
-    return next();
-  });
+  for (const path of deps.network === MAINNET ? ['/ok', '/peso/ok'] : ['/ok']) {
+    app.use(path, async (c, next) => {
+      try {
+        await initialise();
+      } catch {
+        return c.json({ error: 'the fixture seller is not ready: its facilitator does not support this network' }, 502);
+      }
+      return next();
+    });
+  }
   app.use(paymentMiddlewareFromHTTPServer(httpServer, undefined, undefined, false));
   app.get('/ok', (c) => c.json({ ok: true }));
+  if (deps.network === MAINNET) app.get('/peso/ok', (c) => c.json({ ok: true }));
 
   registerBadRoutes(app, deps, (path) => path !== NO_CORS_PATH);
   registerPaidRoutes(app, { ...deps, slowMs: deps.slowMs ?? DEFAULT_SLOW_MS });

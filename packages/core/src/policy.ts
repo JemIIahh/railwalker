@@ -43,6 +43,8 @@ export interface PayQuery {
   readStyle: boolean;
   optedOut: boolean;
   balanceUsd: number;
+  /** Whether the wallet holds the price in the asset itself. Undefined when nobody checked, which never blocks a payment. */
+  holdsPrice?: boolean;
   now: Date;
   feePaidUsd?: number;
   spentOnThisCheckUsd?: number;
@@ -63,6 +65,8 @@ export function decidePay(policy: Policy, state: SpendState, q: PayQuery): PayDe
   if (price > policy.perProbeMaxUsd + EPS) return deny('over_probe_cap');
   if (q.stage === 'unsolicited' && price + EPS < policy.unsolicitedMinPriceUsd) return deny('price_below_unsolicited_minimum');
   if (q.balanceUsd - price < policy.reserveUsd - EPS) return deny('below_reserve');
+  // A wallet that cannot cover the price would fail at signing, and that failure must never be read as the seller's.
+  if (q.holdsPrice === false) return deny('insufficient_asset_balance');
   if (state.totalUsd + price > policy.eventMaxUsd + EPS) return deny('over_event_cap');
   if ((state.byEndpointDay[dayKey(q)] ?? 0) + price > policy.perEndpointDayMaxUsd + EPS) return deny('over_endpoint_day_cap');
   if (q.stage === 'unsolicited' && (state.settlementsBySeller[q.sellerKey] ?? 0) >= policy.unsolicitedMaxSettlementsPerSeller) {

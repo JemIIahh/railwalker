@@ -381,6 +381,22 @@ describe('confirmEndpoint: the ledger decides what may be paid', () => {
     expect(b.ledger.snapshot().totalUsd).toBeCloseTo(0.001, 6);
   });
 
+  test('a peso price the wallet does not hold is SKIPPED insufficient_asset_balance, never paid and never blamed on the seller', async () => {
+    const challenge = challengeOf(raw('wARS', { amount: '8000000000000000000' }));
+    const held: bigint[] = [7_999_999_999_999_999_999n, 8_000_000_000_000_000_000n];
+    const asked: string[] = [];
+    const assetBalance = async (symbol: AssetSymbol) => (asked.push(symbol), held.shift()!);
+
+    const short = await skipped({ assets: ['wARS'] }, { pesoRates: { wARS: 0.0006 }, assetBalance }, challenge);
+    expect(verdictFor(short.report, 'wARS')).toMatchObject({ kind: 'SKIPPED', code: 'insufficient_asset_balance', basis: 'PREDICTED' });
+    expect(short.requests).toEqual([]);
+    expect(short.ledger.snapshot().totalUsd).toBe(0);
+
+    const enough = await skipped({ assets: ['wARS'] }, { pesoRates: { wARS: 0.0006 }, assetBalance }, challenge);
+    expect(enough.requests).toEqual([expect.objectContaining({ asset: 'wARS', maxAtomic: '8000000000000000000' })]);
+    expect(asked).toEqual(['wARS', 'wARS']);
+  });
+
   test('two concurrent confirms for one unsolicited seller never exceed 3 settlements', async () => {
     const report = await scan(withAmount('5000'));
     const { deps, requests, ledger } = setup();

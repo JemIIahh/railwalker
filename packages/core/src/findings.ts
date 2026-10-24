@@ -100,6 +100,7 @@ export const DENY_REASONS = [
   'seller_settlement_limit',
   'price_below_unsolicited_minimum',
   'below_reserve',
+  'insufficient_asset_balance',
   'customer_fee_fraction_exceeded',
   'unpriced_asset',
 ] as const;

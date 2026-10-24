@@ -34,6 +34,8 @@ export interface ConfirmDeps {
   /** Identifies the seller in the ledger's per-seller and per-day caps. */
   sellerKey: string;
   balanceUsd: () => Promise<number>;
+  /** The wallet's balance of one asset, in atomic units. When given, a price the wallet does not hold is never attempted. */
+  assetBalance?: (symbol: AssetSymbol) => Promise<bigint>;
   now: () => Date;
   pesoRates?: Partial<Record<AssetSymbol, number>>;
   learnedShape?: Shape | null;
@@ -118,6 +120,12 @@ function recordScan(rec: RunRecorder, report: CheckReport): void {
   rec.step('lints', errors === 0, `${n(report.findings.length, 'finding')}: ${n(errors, 'error')}, ${n(warnings, 'warning')}`, { codes: report.findings.map((f) => f.code) });
 }
 
+/** Undefined when it cannot be known (no balance reader, or a price that is not a whole number): the policy then decides on the rest. */
+async function holdsPrice(deps: ConfirmDeps, symbol: AssetSymbol, amountAtomic: string): Promise<boolean | undefined> {
+  if (!deps.assetBalance || !/^\d+$/.test(amountAtomic)) return undefined;
+  return (await deps.assetBalance(symbol)) >= BigInt(amountAtomic);
+}
+
 async function confirmAsset(c: Ctx, symbol: AssetSymbol, accept: Accept): Promise<AssetResult> {
   const { deps, rec, opts } = c;
   const info = ASSETS[symbol];
@@ -137,6 +145,7 @@ async function confirmAsset(c: Ctx, symbol: AssetSymbol, accept: Accept): Promis
       readStyle: c.readStyle,
       optedOut: opts.optedOut,
       balanceUsd: await deps.balanceUsd(),
+      holdsPrice: await holdsPrice(deps, symbol, accept.amountAtomic),
       now: deps.now(),
       feePaidUsd: opts.feePaidUsd,
       spentOnThisCheckUsd: c.spent.usd,

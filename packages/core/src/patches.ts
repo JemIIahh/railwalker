@@ -26,11 +26,10 @@ export function patchFor(f: Finding): Patch | null {
         code,
         title: 'Declare the gas-sponsorship extension on the route',
         why: 'Clients sign the sponsored EIP-2612 permit only when the 402 carries this key; the facilitator advertising it in /supported is not enough. Without it first-time wallets get 412 permit2_allowance_required.',
-        after: `extensions: {
-  eip2612GasSponsoring: {
-    info: { description: "The facilitator sponsors the EIP-2612 permit to Permit2.", version: "1" },
-  },
-},`,
+        after: `import { declareEip2612GasSponsoringExtension } from "@x402/extensions";
+
+// In the route config. This adds the eip2612GasSponsoring key that the 402 must carry.
+extensions: { ...declareEip2612GasSponsoringExtension() },`,
       };
     case 'permit2_method_missing':
       return {

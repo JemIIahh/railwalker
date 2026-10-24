@@ -35,6 +35,7 @@ function world(over: Partial<FixtureDeps> = {}) {
         payer: account.address,
         sellerKey: 'fixtures.example',
         balanceUsd: async () => 1,
+        pesoRates: { wARS: 0.001, wBRL: 0.3 },
         now: () => new Date(),
         tooSlowMs,
       },
@@ -50,7 +51,7 @@ const challengeOf = async (res: Response) => decodePaymentRequiredHeader(res.hea
 const severe = (r: { findings: { severity: string }[] }) => r.findings.filter((f) => f.severity !== 'info');
 
 describe('FIXTURE_EXPECTATIONS', () => {
-  test('is exactly the twelve routes the plan names, each with a real finding code', () => {
+  test('is exactly the thirteen routes the plan names, each with a real finding code', () => {
     expect(FIXTURE_EXPECTATIONS).toEqual({
       '/bad/permit2-method': 'permit2_method_missing',
       '/bad/permit2-sponsorship': 'permit2_gas_sponsorship_missing',
@@ -64,6 +65,7 @@ describe('FIXTURE_EXPECTATIONS', () => {
       '/paid/empty': 'delivered_empty',
       '/paid/bad-json': 'delivered_invalid_json',
       '/paid/slow': 'too_slow',
+      '/peso/paid/500': 'paid_not_delivered',
     });
     for (const code of Object.values(FIXTURE_EXPECTATIONS)) expect(FINDING_ORDER).toContain(code);
   });
@@ -368,5 +370,56 @@ describe('mounted under a base path (how the web app serves them)', () => {
     const o = await payEndpoint({ account, publicClient, fetchImpl: m.fetchImpl }, { url: `${BASE}${MOUNT}/ok`, method: 'GET', asset: 'USDC', maxAtomic: '5000', timeoutMs: 5000 });
     expect(o).toMatchObject({ paid: true, status: 200 });
     expect(JSON.parse(o.bodyText)).toEqual({ ok: true });
+  });
+});
+
+describe('/peso/*: the same checks, in pesos', () => {
+  const PESO_OK = '/peso/ok';
+  const PESO_PRICE = { wARS: '8000000000000000000', wBRL: '25000000000000000' } as const;
+
+  test('/peso/ok scans clean with the real scanner: nothing above info, both pesos PASS (predicted)', async () => {
+    const r = await world().scan(PESO_OK);
+    expect(r.status).toBe(402);
+    expect(severe(r)).toEqual([]);
+    expect(r.verdicts.map((v) => [v.assetSymbol, v.kind, v.basis])).toEqual([
+      ['wARS', 'PASS', 'PREDICTED'],
+      ['wBRL', 'PASS', 'PREDICTED'],
+    ]);
+  });
+
+  test('/peso/ok asks for about half a US cent in each peso, says it is a Permit2 asset and carries the sponsorship extension', async () => {
+    const res = await world().get(PESO_OK);
+    const c = await challengeOf(res);
+    expect(c.accepts.map((a) => [a.asset, a.amount, a.network, a.payTo])).toEqual([
+      [ASSETS.wARS.address, PESO_PRICE.wARS, 'eip155:42220', PAY_TO],
+      [ASSETS.wBRL.address, PESO_PRICE.wBRL, 'eip155:42220', PAY_TO],
+    ]);
+    for (const a of c.accepts) expect(a.extra).toMatchObject({ assetTransferMethod: 'permit2', version: '1' });
+    expect(c.accepts.map((a) => a.extra?.name)).toEqual([ASSETS.wARS.eip712Name, ASSETS.wBRL.eip712Name]);
+    expect(Object.keys(c.extensions ?? {})).toContain('eip2612GasSponsoring');
+    expect(res.headers.get('x-fixture-expect')).toBeNull();
+  });
+
+  test.each(['wARS', 'wBRL'] as const)('/peso/ok confirms PASS CONFIRMED in %s with the real buyer and the mock facilitator', async (asset) => {
+    const w = world();
+    const { report, run } = await w.confirm(PESO_OK, [asset]);
+    expect(report.verdicts.find((v) => v.assetSymbol === asset)).toMatchObject({ kind: 'PASS', basis: 'CONFIRMED' });
+    expect(run.payments).toEqual([expect.objectContaining({ symbol: asset, txHash: MOCK_TX_HASH, amountAtomic: PESO_PRICE[asset], payTo: PAY_TO })]);
+    expect(w.facilitator).toMatchObject({ verifyCalls: 1, settleCalls: 1 });
+  });
+
+  test('/peso/paid/500 scans clean, then takes the pesos and fails: paid_not_delivered (CONFIRMED)', async () => {
+    const w = world();
+    expect(severe(await w.scan('/peso/paid/500'))).toEqual([]);
+    const { report, run } = await w.confirm('/peso/paid/500', ['wARS']);
+    expect(report.verdicts.find((v) => v.assetSymbol === 'wARS')).toMatchObject({ kind: 'FAIL', code: 'paid_not_delivered', basis: 'CONFIRMED' });
+    expect(run.payments).toEqual([expect.objectContaining({ symbol: 'wARS', txHash: MOCK_TX_HASH })]);
+    expect(run.steps.find((s) => s.stage === 'deliver')).toMatchObject({ ok: false, detail: { status: 500 } });
+  });
+
+  test('the peso routes exist on mainnet only: the pesos do not exist on Celo Sepolia', async () => {
+    const w = world({ network: 'eip155:11142220' });
+    expect((await w.get(PESO_OK)).status).toBe(404);
+    expect((await w.get('/peso/paid/500')).status).toBe(404);
   });
 });

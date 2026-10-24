@@ -1,5 +1,6 @@
 import { encodePaymentRequiredHeader } from '@x402/core/http';
 import type { PaymentRequired } from '@x402/core/types';
+import { declareEip2612GasSponsoringExtension } from '@x402/extensions';
 import { ASSETS, CELO_SEPOLIA_USDC, type FindingCode } from '@railwalker/core';
 import type { Context } from 'hono';
 
@@ -10,6 +11,13 @@ export const SEPOLIA: FixtureNetwork = 'eip155:11142220';
 export const SEPOLIA_USDC = CELO_SEPOLIA_USDC;
 /** $0.005 of a 6-decimal asset: the smallest price an unsolicited probe may pay. */
 export const PRICE = '5000';
+
+/** The extension a Permit2 route must carry so first-time wallets can pay, exactly as the x402 library declares it. */
+export const SPONSORSHIP = declareEip2612GasSponsoringExtension();
+
+/** The pesos that can be bought on Celo, and what a correct seller asks in each: about half a US cent, in 18-decimal units. */
+export const PESOS = ['wARS', 'wBRL'] as const;
+export const PESO_PRICES = { wARS: '8000000000000000000', wBRL: '25000000000000000' } as const;
 
 export interface GoodAsset {
   address: string;
@@ -35,6 +43,13 @@ export interface WireAccept {
 
 export function accept(a: { network: string; asset: string; payTo: string; amount?: string; extra: Record<string, unknown> }): WireAccept {
   return { scheme: 'exact', network: a.network, amount: a.amount ?? PRICE, asset: a.asset, payTo: a.payTo, maxTimeoutSeconds: 300, extra: a.extra };
+}
+
+/** The accepts of a correct peso seller: Permit2 assets that say so, on mainnet, where the pesos live. */
+export function pesoAccepts(payTo: string): WireAccept[] {
+  return PESOS.map((s) =>
+    accept({ network: MAINNET, asset: ASSETS[s].address, payTo, amount: PESO_PRICES[s], extra: { name: ASSETS[s].eip712Name, version: ASSETS[s].eip712Version, assetTransferMethod: 'permit2' } }),
+  );
 }
 
 /** The accepts of a correct seller, in wire form. */

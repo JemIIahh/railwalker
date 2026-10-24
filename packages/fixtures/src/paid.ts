@@ -3,7 +3,7 @@ import type { FacilitatorClient } from '@x402/core/server';
 import type { PaymentPayload, PaymentRequirements } from '@x402/core/types';
 import type { FindingCode } from '@railwalker/core';
 import type { Hono } from 'hono';
-import { challenge, goodAccepts, type FixtureNetwork } from './challenge';
+import { MAINNET, SPONSORSHIP, challenge, goodAccepts, pesoAccepts, type FixtureNetwork } from './challenge';
 
 export const DEFAULT_SLOW_MS = 20_000;
 
@@ -13,6 +13,8 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 interface PaidRoute {
   expect: FindingCode;
   respond: (slowMs: number) => Response | Promise<Response>;
+  /** Asks for pesos (Permit2, with the sponsorship extension) instead of the dollar assets. Mainnet only. */
+  peso?: true;
 }
 
 /** What each route does AFTER it has taken the money. */
@@ -20,6 +22,8 @@ export const PAID_ROUTES: Record<string, PaidRoute> = {
   '/paid/500': { expect: 'paid_not_delivered', respond: () => new Response('{"error":"internal error"}', { status: 500, headers: JSON_HEADERS }) },
   '/paid/empty': { expect: 'delivered_empty', respond: () => new Response('', { status: 200, headers: JSON_HEADERS }) },
   '/paid/bad-json': { expect: 'delivered_invalid_json', respond: () => new Response('{"ok":', { status: 200, headers: JSON_HEADERS }) },
+  // The same betrayal, in pesos: a clean scan, a real peso payment, then a 500.
+  '/peso/paid/500': { expect: 'paid_not_delivered', peso: true, respond: () => new Response('{"error":"internal error"}', { status: 500, headers: JSON_HEADERS }) },
   '/paid/slow': {
     expect: 'too_slow',
     respond: async (slowMs) => {
@@ -35,14 +39,15 @@ export const PAID_ROUTES: Record<string, PaidRoute> = {
  * settlement receipt is returned whatever the response is: the buyer must see that the money moved.
  */
 export function registerPaidRoutes(app: Hono, deps: { facilitator: FacilitatorClient; payTo: string; network: FixtureNetwork; slowMs: number }): void {
-  const accepts = goodAccepts(deps.network, deps.payTo);
-
   for (const [path, route] of Object.entries(PAID_ROUTES)) {
+    if (route.peso && deps.network !== MAINNET) continue; // the pesos do not exist on Celo Sepolia
+    const accepts = route.peso ? pesoAccepts(deps.payTo) : goodAccepts(deps.network, deps.payTo);
+    const extensions = route.peso ? SPONSORSHIP : undefined;
     app.get(path, async (c) => {
-      const refuse = (error: string) => challenge(c, accepts, { expect: route.expect, error });
+      const refuse = (error: string) => challenge(c, accepts, { expect: route.expect, error, extensions });
 
       const header = c.req.header('payment-signature');
-      if (!header) return challenge(c, accepts, { expect: route.expect });
+      if (!header) return challenge(c, accepts, { expect: route.expect, extensions });
 
       let payment: PaymentPayload;
       try {
