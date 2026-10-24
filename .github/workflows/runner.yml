@@ -3,8 +3,10 @@ name: Runner
 # The scheduled mystery shopper: it scans for free, pays a few targets, and commits aggregate-only data to the `data` branch.
 # Only `schedule` and `workflow_dispatch` start it. No pull request can: a fork or a pull request never gets the secrets below.
 on:
-  schedule:
-    - cron: '17 * * * *'
+  # The hourly schedule is off until the repository secrets below exist; without them every run would fail. To turn it on, set
+  # AGENT_PRIVATE_KEY, RAILWALKER_ATTRIBUTION_CODE and SELLER_SALT, then uncomment these two lines.
+  # schedule:
+  #   - cron: '17 * * * *'
   workflow_dispatch:
 
 permissions:
