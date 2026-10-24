@@ -1,24 +1,121 @@
-export const metadata = { title: 'Methodology · Railwalker' };
+import { DEFAULT_POLICY } from '@railwalker/core';
+import type { VerdictKind } from '@railwalker/core';
+import { CopyButton } from '../../components/copy-button';
+import { Icon, type IconName } from '../../components/icons';
+import { Stamp } from '../../components/stamp';
+import { VERDICT_LABELS } from '../../lib/labels';
+import { formatUsd, formatUsdShort } from '../../lib/view-models';
 
-export default function Methodology() {
+export const metadata = { title: 'How it works' };
+
+const KINDS: VerdictKind[] = ['PASS', 'PASS_WITH_WARNINGS', 'FAIL', 'AMBIGUOUS', 'SKIPPED'];
+
+export default function How() {
+  const p = DEFAULT_POLICY;
+  const safety: { icon: IconName; title: string; note: string }[] = [
+    { icon: 'wallet', title: formatUsd(p.reserveUsd), note: 'wallet floor, never below' },
+    { icon: 'eye', title: 'Reads only', note: 'nothing that acts in the world' },
+    { icon: 'coins', title: `${p.unsolicitedMaxSettlementsPerSeller} payments`, note: 'at most, per registered seller' },
+    { icon: 'tag', title: formatUsdShort(p.unsolicitedMinPriceUsd), note: 'cheapest price we will pay' },
+    { icon: 'lock', title: 'Private is refused', note: 'local, internal and credentialed addresses' },
+    { icon: 'shield', title: 'Sandbox is skipped', note: 'testnet entries are never paid' },
+  ];
   return (
-    <>
-      <h1>How Railwalker decides</h1>
-      <h2>What a scan does</h2>
-      <p>One unpaid request to the URL you give it. It reads the 402 challenge, runs static checks on the payment options, and reports what a buyer would hit. It never pays, and it never follows a redirect to somewhere it has not checked.</p>
-      <h2>Predicted and confirmed</h2>
-      <p>
-        <strong>Predicted</strong> means read from the challenge: nothing was paid. <strong>Confirmed</strong> means a real payment was made on Celo mainnet and what came back was checked, including the settlement on chain. The two are never blended, and there is no score: a verdict is the worst thing found.
-      </p>
-      <h2>What it will not touch</h2>
-      <ul>
-        <li>Private, local and credentialed addresses are refused before any request is sent.</li>
-        <li>Anything that looks like it does something in the world (sends, books, deletes, swaps) is never paid.</li>
-        <li>A seller can opt out by serving a plain-text file at <code>/.well-known/railwalker-optout</code>.</li>
-        <li>The Celo Sepolia sandbox entry that some sellers list is never paid.</li>
-      </ul>
-      <h2>Privacy</h2>
-      <p>Sellers nobody asked us to check appear only in aggregate counts, never by name.</p>
-    </>
+    <div className="container section-tight page">
+      <header className="page-head">
+        <h1 className="page-title">How it works</h1>
+      </header>
+
+      <section className="section-block" aria-labelledby="two">
+        <h2 id="two" className="h2">
+          Two checks
+        </h2>
+        <div className="split">
+          <article className="mode card">
+            <div className="mode-top">
+              <span className="mode-ico">
+                <Icon name="eye" size={24} />
+              </span>
+              <Stamp verdict="PASS" basis="PREDICTED" />
+            </div>
+            <h3>Free scan</h3>
+            <ul>
+              <li>
+                <Icon name="arrowRight" size={16} /> One unpaid request
+              </li>
+              <li>
+                <Icon name="tag" size={16} /> Reads the price tag
+              </li>
+              <li>
+                <Icon name="checklist" size={16} /> Predicts what a buyer hits
+              </li>
+            </ul>
+          </article>
+          <article className="mode card">
+            <div className="mode-top">
+              <span className="mode-ico">
+                <Icon name="coins" size={24} />
+              </span>
+              <Stamp verdict="PASS" basis="CONFIRMED" />
+            </div>
+            <h3>Paid check</h3>
+            <ul>
+              <li>
+                <Icon name="coins" size={16} /> Pays a few cents
+              </li>
+              <li>
+                <Icon name="box" size={16} /> Checks what came back
+              </li>
+              <li>
+                <Icon name="link" size={16} /> Proves it on chain
+              </li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section className="section-block" aria-labelledby="five">
+        <h2 id="five" className="h2">
+          Five verdicts
+        </h2>
+        <div className="stamps">
+          {KINDS.map((kind) => (
+            <div key={kind} className="stamp-card card">
+              <Stamp verdict={kind} basis="CONFIRMED" large />
+              <p>{VERDICT_LABELS[kind]}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="section-block" aria-labelledby="safe">
+        <h2 id="safe" className="h2">
+          Safety rails
+        </h2>
+        <ul className="safety">
+          {safety.map((s) => (
+            <li key={s.title} className="safe card">
+              <span className="ico">
+                <Icon name={s.icon} size={20} />
+              </span>
+              <div>
+                <strong>{s.title}</strong>
+                <span>{s.note}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="section-block" aria-labelledby="out">
+        <h2 id="out" className="h2">
+          Opt out
+        </h2>
+        <p className="opt-row">
+          <span className="code-chip">/.well-known/railwalker-optout</span>
+          <CopyButton text="/.well-known/railwalker-optout" label="Copy path" />
+        </p>
+      </section>
+    </div>
   );
 }

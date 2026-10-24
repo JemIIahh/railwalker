@@ -1,0 +1,75 @@
+/* ---- pages with a title: Proof, How it works, a run ---- */
+.page { display: grid; gap: clamp(32px, 5vw, 56px); }
+.page-head { display: grid; gap: 10px; justify-items: start; }
+.page-title { font: 800 clamp(2.3rem, 5vw, 3.6rem)/1 var(--display); letter-spacing: -0.035em; }
+.stamp-line { color: var(--muted); font-size: 14px; }
+.section-block { display: grid; gap: 20px; }
+.head-row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px; }
+.rule { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; }
+
+/* ---- the big numbers ---- */
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.stats-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.stat { display: grid; gap: 12px; padding: 22px; align-content: start; }
+.stat-ico { width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center; background: var(--butter); color: var(--ink); }
+.stats .stat:nth-child(2) .stat-ico { background: var(--mint); }
+.stats .stat:nth-child(3) .stat-ico { background: var(--sky); }
+.stats .stat:nth-child(4) .stat-ico { background: var(--lilac); }
+.stat-num { font: 800 clamp(2.2rem, 4.2vw, 3rem)/1 var(--display); letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+.stat-label { font-size: 15px; color: var(--ink-2); font-weight: 600; margin-top: -4px; }
+.ring { --p: var(--to); width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; position: relative; background: conic-gradient(var(--yellow-deep) calc(var(--p) * 1%), color-mix(in srgb, var(--ink) 10%, transparent) 0); transition: --p 1.3s var(--ease); }
+.ring::before { content: ''; position: absolute; inset: 5px; border-radius: 50%; background: var(--card); }
+.ring svg { position: relative; }
+.ring[data-phase='zero'] { --p: 0; }
+
+/* ---- the money in and out as a line ---- */
+.flow { display: grid; grid-template-columns: 1fr minmax(90px, 0.7fr) 1.3fr minmax(90px, 0.7fr) 1fr; align-items: center; gap: 8px; padding: 30px 26px; }
+.flow-node { display: grid; justify-items: center; gap: 8px; text-align: center; }
+.flow-ico { width: 54px; height: 54px; border-radius: 18px; display: grid; place-items: center; background: var(--mint); color: var(--ink); }
+.flow-node:nth-child(3) .flow-ico { background: var(--yellow); color: var(--on-yellow); }
+.flow-node:nth-child(5) .flow-ico { background: var(--sky); }
+.flow-title { font: 750 18px/1.2 var(--display); letter-spacing: -0.02em; }
+.flow-sub { font-size: 13px; color: var(--muted); }
+.flow-loop { display: inline-flex; align-items: center; gap: 6px; margin-top: 2px; padding: 4px 10px; border-radius: 99px; box-shadow: inset 0 0 0 1.5px var(--line-strong); font-size: 12px; color: var(--muted); }
+.flow-arrow { display: grid; justify-items: center; gap: 8px; font-size: 15px; font-weight: 650; }
+.flow-arrow i { display: block; position: relative; width: 100%; height: 3px; background: repeating-linear-gradient(90deg, var(--ink-2) 0 8px, transparent 8px 14px); background-size: 28px 3px; animation: flow 1.4s linear infinite; }
+.flow-arrow i::after { content: ''; position: absolute; right: -1px; top: -4px; width: 9px; height: 9px; border-top: 3px solid var(--ink-2); border-right: 3px solid var(--ink-2); transform: rotate(45deg); }
+@keyframes flow { to { background-position: 28px 0; } }
+
+/* ---- what we bought ---- */
+.service-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+.service { display: grid; gap: 16px; padding: 22px; align-content: start; }
+.service-top { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 28px; }
+.service-name { font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.service-nums { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.service-usd { font: 800 2.2rem/1 var(--display); letter-spacing: -0.04em; }
+.service-calls { font-size: 13.5px; color: var(--muted); }
+.proofs { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 14px; border-top: 1.5px dashed var(--line-strong); font-size: 13px; }
+.proof { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; border-radius: 99px; background: color-mix(in srgb, var(--ink) 6%, transparent); transition: background 0.15s, transform 0.2s var(--spring); }
+.proof:hover { background: color-mix(in srgb, var(--ink) 12%, transparent); transform: translateY(-1px); }
+
+/* ---- who paid us ---- */
+.signers { overflow: hidden; }
+.signer { display: grid; grid-template-columns: 30px 1fr auto auto; align-items: center; gap: 14px; padding: 15px 22px; border-top: 1px solid var(--line); }
+.signer:first-child { border-top: 0; }
+.signer-mark { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; }
+.signer-mark.yes { background: color-mix(in srgb, var(--pass) 16%, var(--card)); color: var(--pass); }
+.signer-mark.no { background: color-mix(in srgb, var(--ink) 7%, transparent); color: var(--muted); }
+.pill.counted { color: var(--pass); background: color-mix(in srgb, var(--pass) 12%, transparent); }
+.signer-why { min-width: 96px; text-align: right; font-size: 14px; color: var(--ink-2); font-weight: 520; }
+
+@media (max-width: 960px) {
+  .stats, .stats-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .flow { grid-template-columns: 1fr; gap: 14px; }
+  .flow-arrow { width: 100%; max-width: 180px; justify-self: center; }
+}
+@media (max-width: 560px) {
+  .stats, .stats-4 { grid-template-columns: 1fr; }
+  .signer { grid-template-columns: 30px 1fr auto; row-gap: 4px; }
+  .signer-why { grid-column: 2 / -1; text-align: left; min-width: 0; }
+  .service-grid { grid-template-columns: 1fr; }
+}
+
+.page .h2 { font-size: clamp(1.7rem, 3.2vw, 2.3rem); }
+.notfound { display: grid; justify-items: center; gap: 18px; text-align: center; padding-block: clamp(56px, 10vw, 120px); }
+.notfound .lede { max-width: 36ch; }

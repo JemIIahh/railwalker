@@ -9,3 +9,6 @@ coverage
 # Local data directory for the batch runner. Anchored: `packages/data` is a real package.
 /data/
 next-env.d.ts
+# Pretend data and screenshots for looking at the site locally; never published.
+/apps/web/.sample-data/
+/apps/web/.shots/

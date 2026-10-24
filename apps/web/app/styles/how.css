@@ -1,0 +1,30 @@
+/* ---- how it works ---- */
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.mode { display: grid; gap: 20px; padding: 28px; align-content: start; }
+.mode-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.mode-ico { width: 54px; height: 54px; border-radius: 18px; display: grid; place-items: center; background: var(--sky); }
+.mode:nth-child(2) .mode-ico { background: var(--butter); }
+.mode h3 { font: 800 28px/1.1 var(--display); letter-spacing: -0.03em; }
+.mode ul { display: grid; gap: 12px; }
+.mode li { display: flex; align-items: center; gap: 12px; font-size: 16px; color: var(--ink-2); }
+.mode li svg { color: var(--ink); flex: none; }
+.stamps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.stamp-card { display: grid; justify-items: center; align-content: start; gap: 16px; padding: 28px 14px 22px; text-align: center; }
+.stamp-card p { font-size: 14.5px; color: var(--ink-2); line-height: 1.35; }
+.safety { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.safe { display: flex; align-items: center; gap: 14px; padding: 18px 20px; border-radius: var(--r-lg); }
+.safe .ico { width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center; background: var(--mint); flex: none; }
+.safe:nth-child(3n + 2) .ico { background: var(--butter); }
+.safe:nth-child(3n) .ico { background: var(--sky); }
+.safe strong { display: block; font: 750 17px/1.2 var(--display); letter-spacing: -0.02em; }
+.safe span { font-size: 14px; color: var(--muted); }
+.opt-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+@media (max-width: 960px) {
+  .split { grid-template-columns: 1fr; }
+  .stamps { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .safety { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 560px) {
+  .stamps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .safety { grid-template-columns: 1fr; }
+}

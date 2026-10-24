@@ -8,14 +8,21 @@
     "build": "next build",
     "start": "next start",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit -p ."
+    "typecheck": "tsc --noEmit -p .",
+    "shots": "tsx scripts/shots.ts",
+    "sample-data": "tsx scripts/sample-data.ts",
+    "sample": "tsx scripts/sample-data.ts && DATA_DIR=.sample-data RAILWALKER_SAMPLE=1 next dev -p 3411"
   },
   "dependencies": {
+    "@fontsource-variable/bricolage-grotesque": "5.3.0",
+    "@fontsource/instrument-serif": "5.3.0",
     "@railwalker/chain": "workspace:*",
     "@railwalker/core": "workspace:*",
+    "@railwalker/data": "workspace:*",
     "@railwalker/fixtures": "workspace:*",
     "@railwalker/scanner": "workspace:*",
     "@x402/core": "2.28.0",
+    "geist": "1.8.1",
     "hono": "4.13.13",
     "next": "16.4.2",
     "react": "19.3.1",
@@ -25,6 +32,8 @@
   "devDependencies": {
     "@railwalker/testkit": "workspace:*",
     "@types/react": "19.3.0",
-    "@types/react-dom": "19.3.0"
+    "@types/react-dom": "19.3.0",
+    "playwright-core": "1.63.0",
+    "tsx": "4.23.15"
   }
 }

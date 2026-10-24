@@ -1,0 +1,94 @@
+/* Railwalker: a friendly yellow rail bird on a warm cream page. Colour is for meaning (works, needs polish, broken, not sure) and for
+   the odd pastel card; the one bright accent is Celo yellow, used for the actions you are meant to press. */
+:root {
+  --bg: #fbf7ec;
+  --bg-2: #f5eedb;
+  --card: #ffffff;
+  --ink: #14231b;
+  --ink-2: #3f5046;
+  --muted: #75857b;
+  --line: #e8e0ca;
+  --line-strong: #d9cfb2;
+
+  --yellow: #fcff52;
+  --yellow-deep: #f1d51a;
+  --yellow-soft: #fffbc2;
+  --on-yellow: #14231b;
+
+  --pass: #1e9250;
+  --warn: #d98512;
+  --fail: #d8452d;
+  --odd: #7c55e6;
+  --idle: #8a978f;
+
+  --mint: #d3efda;
+  --lilac: #e4dcff;
+  --peach: #ffddcc;
+  --sky: #d5ebff;
+  --butter: #fff3ae;
+
+  --night: #0f1a13;
+  --night-2: #16241b;
+  --night-line: #26382d;
+  --on-night: #f6f3e8;
+  --on-night-muted: #9fb0a5;
+
+  --r-2xl: 36px;
+  --r-xl: 28px;
+  --r-lg: 22px;
+  --r-md: 16px;
+  --r-sm: 12px;
+  --shadow-1: 0 1px 2px rgb(20 35 27 / 0.06);
+  --shadow-2: 0 2px 4px rgb(20 35 27 / 0.04), 0 18px 40px -20px rgb(20 35 27 / 0.28);
+  --shadow-3: 0 4px 8px rgb(20 35 27 / 0.05), 0 36px 72px -32px rgb(20 35 27 / 0.4);
+  --glow: 0 10px 30px -8px rgb(241 213 26 / 0.65);
+
+  --display: 'Bricolage Grotesque Variable', var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  --mono: var(--font-geist-mono), ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --col: 1160px;
+  --gutter: 24px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --spring: cubic-bezier(0.3, 1.5, 0.5, 1);
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0c1510;
+    --bg-2: #111c15;
+    --card: #15211a;
+    --ink: #f5f2e6;
+    --ink-2: #c6d0c7;
+    --muted: #8fa194;
+    --line: #243629;
+    --line-strong: #31483a;
+
+    --yellow-soft: #26280c;
+
+    --pass: #52d687;
+    --warn: #f5b13d;
+    --fail: #ff7a62;
+    --odd: #ab92ff;
+    --idle: #8fa194;
+
+    --mint: #173826;
+    --lilac: #281f4c;
+    --peach: #43261b;
+    --sky: #17304a;
+    --butter: #3a3511;
+
+    --night: #070d09;
+    --night-2: #0e1812;
+    --night-line: #1f3126;
+
+    --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-2: 0 2px 4px rgb(0 0 0 / 0.3), 0 18px 40px -20px rgb(0 0 0 / 0.7);
+    --shadow-3: 0 4px 8px rgb(0 0 0 / 0.3), 0 36px 72px -32px rgb(0 0 0 / 0.85);
+  }
+}
+
+@media (max-width: 560px) {
+  :root { --gutter: 16px; --r-2xl: 28px; --r-xl: 24px; }
+}

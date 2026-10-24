@@ -51,12 +51,21 @@ importers:
 
   apps/web:
     dependencies:
+      '@fontsource-variable/bricolage-grotesque':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource/instrument-serif':
+        specifier: 5.3.0
+        version: 5.3.0
       '@railwalker/chain':
         specifier: workspace:*
         version: link:../../packages/chain
       '@railwalker/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@railwalker/data':
+        specifier: workspace:*
+        version: link:../../packages/data
       '@railwalker/fixtures':
         specifier: workspace:*
         version: link:../../packages/fixtures
@@ -66,6 +75,9 @@ importers:
       '@x402/core':
         specifier: 2.28.0
         version: 2.28.0
+      geist:
+        specifier: 1.8.1
+        version: 1.8.1(next@16.4.2(@types/node@22.19.1)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))
       hono:
         specifier: 4.13.13
         version: 4.13.13
@@ -91,6 +103,12 @@ importers:
       '@types/react-dom':
         specifier: 19.3.0
         version: 19.3.0(@types/react@19.3.0)
+      playwright-core:
+        specifier: 1.63.0
+        version: 1.63.0
+      tsx:
+        specifier: 4.23.15
+        version: 4.23.15
 
   packages/chain:
     dependencies:
@@ -393,6 +411,12 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@fontsource-variable/bricolage-grotesque@5.3.0':
+    resolution: {integrity: sha512-TLi9Q4hJjS2UvoTMRSS2nHu6c4R56lAw60NR9QYtVRCHn0XtsFpiEhNffZ8Glsoxu6wEEwLKBP8lb94J52PNBA==}
+
+  '@fontsource/instrument-serif@5.3.0':
+    resolution: {integrity: sha512-mDiaIg0u67sYV59fie92Wz4sM8UiVlbL7fLxnFPCKkX15DMASEnQTREbaP5S5/3DCcsoAOcQ0sV9E4AeY4QqYQ==}
 
   '@img/colour@1.1.0':
     resolution: {integrity: sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ==}
@@ -991,6 +1015,11 @@ packages:
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
 
+  geist@1.8.1:
+    resolution: {integrity: sha512-oSBhuzTvwZqGAZVC4swTRo61G/JHojtEVNR3DCToU+4nUBkG48ndKNvj4Ma7zZ+OlJkYDLT66HS+hrFszkovTg==}
+    peerDependencies:
+      next: '>=13.2.0'
+
   hono@4.13.13:
     resolution: {integrity: sha512-CQ46U0ZkAGmbT/4UxdzzGJpacP2IeKgY4a5/tOI9AABbpOMfK739wfDXmv1usCk+3RkKj1hQy4/fjhiwa2xlrA==}
     engines: {node: '>=16.9.0'}
@@ -1123,6 +1152,11 @@ packages:
   picomatch@4.0.7:
     resolution: {integrity: sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA==}
     engines: {node: '>=12'}
+
+  playwright-core@1.63.0:
+    resolution: {integrity: sha512-rYCsBF/M5HjUch52bbtVONEFjv6Xu8sm8h72dNlR5bzIE1fvC/bxgspzkjSfU+MweEMmPM8KJebG6nnyxo5mCg==}
+    engines: {node: '>=20'}
+    hasBin: true
 
   postcss@8.5.23:
     resolution: {integrity: sha512-g50586zr4bZmwFiTlflMu8E0bDTb5I5gertgwAKmsdUlTQIhZtunzUlD1WSzwcVWPoAVpsrA6vlfCD7oXvRwgg==}
@@ -1428,6 +1462,10 @@ snapshots:
 
   '@esbuild/win32-x64@0.28.2':
     optional: true
+
+  '@fontsource-variable/bricolage-grotesque@5.3.0': {}
+
+  '@fontsource/instrument-serif@5.3.0': {}
 
   '@img/colour@1.1.0':
     optional: true
@@ -1877,6 +1915,10 @@ snapshots:
   fsevents@2.3.3:
     optional: true
 
+  geist@1.8.1(next@16.4.2(@types/node@22.19.1)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)):
+    dependencies:
+      next: 16.4.2(@types/node@22.19.1)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+
   hono@4.13.13: {}
 
   isows@1.0.7(ws@8.21.0):
@@ -2002,6 +2044,8 @@ snapshots:
   picocolors@1.1.1: {}
 
   picomatch@4.0.7: {}
+
+  playwright-core@1.63.0: {}
 
   postcss@8.5.23:
     dependencies:
