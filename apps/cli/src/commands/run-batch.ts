@@ -8,8 +8,8 @@ import { Refusal, UsageError } from '../errors';
 import { loadSpendState, runBatch } from '../run-batch';
 import type { Balances, Ctx } from '../types';
 
-/** What a scheduled run pays with, most wanted first: the faucet's token, then USDC. USDT is never paid with. */
-const PAY_WITH: readonly ('USAT' | 'USDC')[] = ['USAT', 'USDC'];
+/** What a scheduled run pays with, most wanted first: the faucet's token, then USDC, then the pesos it holds. USDT is never paid with. */
+const PAY_WITH: readonly ('USAT' | 'USDC' | 'wARS' | 'wBRL')[] = ['USAT', 'USDC', 'wARS', 'wBRL'];
 const SCAN_CONCURRENCY = 8;
 
 /** The asset to pay a seller with: one it offers on Celo mainnet at a whole-number price that the wallet holds enough of. */
@@ -17,7 +17,7 @@ export function chooseAsset(report: CheckReport, balances: Balances): AssetSymbo
   for (const symbol of PAY_WITH) {
     const offer = report.challenge?.accepts.find((a) => a.chainId === CELO_MAINNET && a.assetInfo?.symbol === symbol);
     if (!offer || !/^\d+$/.test(offer.amountAtomic)) continue;
-    if (balances[symbol] >= BigInt(offer.amountAtomic)) return symbol;
+    if ((balances[symbol] ?? 0n) >= BigInt(offer.amountAtomic)) return symbol;
   }
   return null;
 }

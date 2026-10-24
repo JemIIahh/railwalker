@@ -1,6 +1,22 @@
 import { describe, expect, test } from 'vitest';
 import { API_KEY, KEY, MAINNET_ENV, SALT, URL_OK, harness } from './harness';
 
+describe('balance', () => {
+  test('lists the pesos too, once they are read, and the stablecoin total counts only dollars', async () => {
+    const h = harness({ readBalances: async () => ({ celo: 0n, USDC: 0n, USDT: 0n, USAT: 1_500_000n, wARS: 407_500_000_000_000_000_000n, wBRL: 1_250_000_000_000_000_000n }) });
+    expect(await h.run('balance')).toBe(0);
+    expect(h.out()).toContain('wARS  407.500000');
+    expect(h.out()).toContain('wBRL  1.250000');
+    expect(h.out()).toContain('stablecoins  $1.5000');
+  });
+
+  test('says nothing about pesos when they were not read', async () => {
+    const h = harness();
+    expect(await h.run('balance')).toBe(0);
+    expect(h.out()).not.toContain('wARS');
+  });
+});
+
 describe('runCli', () => {
   test('no arguments, help and -h print the commands and exit 0', async () => {
     for (const argv of [[], ['help'], ['--help'], ['-h']]) {

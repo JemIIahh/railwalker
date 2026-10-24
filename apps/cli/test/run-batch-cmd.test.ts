@@ -313,6 +313,34 @@ describe('chooseAsset', () => {
     expect(chooseAsset(await report([offer('USAT', { amount: '0.5' })]), wallet(9999n, 9999n))).toBeNull();
   });
 
+  const peso = (symbol: 'wARS' | 'wBRL', amount = '8000000000000000000') => ({
+    scheme: 'exact',
+    network: 'eip155:42220',
+    amount,
+    asset: ASSETS[symbol].address,
+    payTo: '0x1111111111111111111111111111111111111111',
+    maxTimeoutSeconds: 300,
+    extra: { name: ASSETS[symbol].eip712Name, version: ASSETS[symbol].eip712Version, assetTransferMethod: 'permit2' },
+  });
+  const pesos = (wARS: bigint, wBRL = 0n) => ({ ...wallet(0n, 0n), wARS, wBRL });
+
+  test('a seller that takes only pesos is paid in the peso the wallet holds enough of', async () => {
+    const both = await report([peso('wARS'), peso('wBRL', '25000000000000000')]);
+    expect(chooseAsset(both, pesos(8n * 10n ** 18n, 10n ** 18n))).toBe('wARS');
+    expect(chooseAsset(both, pesos(7n * 10n ** 18n, 10n ** 18n))).toBe('wBRL');
+    expect(chooseAsset(both, pesos(7n * 10n ** 18n, 24_999_999_999_999_999n))).toBeNull();
+  });
+
+  test('dollars come first: a seller that offers both is paid in dollars while the wallet holds them', async () => {
+    const mixed = await report([peso('wARS'), offer('USAT')]);
+    expect(chooseAsset(mixed, { ...pesos(10n ** 20n), USAT: 5000n })).toBe('USAT');
+    expect(chooseAsset(mixed, { ...pesos(10n ** 20n), USAT: 4999n })).toBe('wARS');
+  });
+
+  test('a wallet whose peso balances were not read pays no peso', async () => {
+    expect(chooseAsset(await report([peso('wARS')]), wallet(9999n, 9999n))).toBeNull();
+  });
+
   test('a report without a challenge has nothing to pay', async () => {
     const none = { ...(await report()), challenge: null };
     expect(chooseAsset(none, wallet(9999n, 9999n))).toBeNull();

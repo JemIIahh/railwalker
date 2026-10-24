@@ -3,6 +3,7 @@ import { parseArgs } from './args';
 import { balance } from './commands/balance';
 import { checkCommand } from './commands/check';
 import { doctor } from './commands/doctor';
+import { fundPesosCommand } from './commands/fund-pesos';
 import { registerCommand } from './commands/register';
 import { runBatchCommand } from './commands/run-batch';
 import { scanCommand } from './commands/scan';
@@ -26,6 +27,9 @@ Commands:
         One scheduled run: scans everything for free, pays up to --max-paid targets (default 3) in turn, and writes the saved
         state, a summary and the public run records to <dir>. Nothing it writes or prints names a seller nobody asked about.
         --dry-run says what it would pay and writes nothing. RAILWALKER_FIXTURES_URL names our deployed fixtures.
+  fund-pesos --to wARS|wBRL --usd <amount, at most 0.5> [--from USAT|USDT] [--fee USAT|USDC|USDT] [--yes]
+        Buys pesos on Uniswap with a few cents of dollars (USAT goes through USDT). Quotes and sends nothing without --yes;
+        with it, two tagged transactions: an exact approval, then the swap.
   wallet:new   Creates the agent wallet key in .env and prints the address only.
   doctor       Checks the configuration, the attribution code and the balance.
   balance      Shows the agent wallet's balances.
@@ -79,6 +83,8 @@ export async function runCli(argv: string[], deps: CliDeps): Promise<number> {
         return await checkCommand(ctx, parsed);
       case 'register':
         return await registerCommand(ctx, parsed);
+      case 'fund-pesos':
+        return await fundPesosCommand(ctx, parsed);
       case 'run-batch':
         return await runBatchCommand(ctx, parsed);
       default:

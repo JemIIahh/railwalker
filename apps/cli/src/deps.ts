@@ -1,5 +1,5 @@
 import { access, chmod, mkdir, readFile, writeFile } from 'node:fs/promises';
-import { loadConfig, loadRegistration, makeClients, payEndpoint, registerAgent, toAgentUri, buildRegistration, verifySettlementOnChain, verifyTagged, type Config } from '@railwalker/chain';
+import { executeSwap, loadConfig, loadRegistration, makeClients, payEndpoint, planSwap, readPesoRates, registerAgent, toAgentUri, buildRegistration, verifySettlementOnChain, verifyTagged, type Config } from '@railwalker/chain';
 import { ASSETS, DEFAULT_POLICY, SpendLedger } from '@railwalker/core';
 import { FileDataStore, sellerKeyFor } from '@railwalker/data';
 import { discoverEndpoints, fixtureEndpoints } from '@railwalker/discovery';
@@ -12,9 +12,9 @@ import type { Balances, CliDeps } from './types';
 async function readBalances(cfg: Config): Promise<Balances> {
   const c = makeClients(cfg);
   const owner = c.account.address;
-  const token = (symbol: 'USDC' | 'USDT' | 'USAT') => c.publicClient.readContract({ address: ASSETS[symbol].address, abi: erc20Abi, functionName: 'balanceOf', args: [owner] });
-  const [celo, USDC, USDT, USAT] = await Promise.all([c.publicClient.getBalance({ address: owner }), token('USDC'), token('USDT'), token('USAT')]);
-  return { celo, USDC, USDT, USAT };
+  const token = (symbol: 'USDC' | 'USDT' | 'USAT' | 'wARS' | 'wBRL') => c.publicClient.readContract({ address: ASSETS[symbol].address, abi: erc20Abi, functionName: 'balanceOf', args: [owner] });
+  const [celo, USDC, USDT, USAT, wARS, wBRL] = await Promise.all([c.publicClient.getBalance({ address: owner }), token('USDC'), token('USDT'), token('USAT'), token('wARS'), token('wBRL')]);
+  return { celo, USDC, USDT, USAT, wARS, wBRL };
 }
 
 /** What one scheduled run spends on finding things: a registry walk and a few registrations, all bounded, under a time budget. */
@@ -23,6 +23,9 @@ const DISCOVERY = { maxIds: 1000, maxRegistrations: 100, concurrency: 8, budgetM
 /** Pays through a ledger the caller keeps, from the wallet the configuration describes. */
 async function confirmThrough(cfg: Config, ledger: SpendLedger, sellerKey: string, report: CheckReport, opts: ConfirmOptions) {
   const c = makeClients(cfg);
+  // A peso is priced from the pools only when a peso is actually going to be paid: no run that pays dollars reads a pool.
+  const paysPesos = opts.assets.some((s) => !ASSETS[s].usdPegged);
+  const pesoRates = paysPesos ? (await readPesoRates(c.publicClient)).rates : undefined;
   return confirmEndpoint(
     {
       pay: (req) => payEndpoint({ account: c.account, publicClient: c.publicClient }, req),
@@ -31,6 +34,8 @@ async function confirmThrough(cfg: Config, ledger: SpendLedger, sellerKey: strin
       payer: c.account.address,
       sellerKey,
       balanceUsd: async () => stablecoinUsd(await readBalances(cfg)),
+      assetBalance: async (symbol) => (await c.publicClient.readContract({ address: ASSETS[symbol].address, abi: erc20Abi, functionName: 'balanceOf', args: [c.account.address] })) as bigint,
+      ...(pesoRates ? { pesoRates } : {}),
       now: () => new Date(),
     },
     report,
@@ -74,12 +79,23 @@ export function realDeps(env: Record<string, string | undefined> = process.env, 
     async discover(cfg, cursor, o) {
       const c = makeClients(cfg);
       // The fixtures package carries a whole web server: load it only for the command that needs its route list.
-      const fixtures = o.fixturesUrl === undefined ? [] : fixtureEndpoints(o.fixturesUrl, ['/ok', ...Object.keys((await import('@railwalker/fixtures')).FIXTURE_EXPECTATIONS)]);
+      const fixtures = o.fixturesUrl === undefined ? [] : fixtureEndpoints(o.fixturesUrl, ['/ok', '/peso/ok', ...Object.keys((await import('@railwalker/fixtures')).FIXTURE_EXPECTATIONS)]);
       const found = await discoverEndpoints(
         { fetchImpl: fetch, lister: c.publicClient, cfg, loadRegistration: (uri) => loadRegistration(uri, fetch), now: () => Date.now() },
         { fixtures, nextId: BigInt(cursor.nextId), ...DISCOVERY },
       );
       return { endpoints: found.endpoints, cursor: { nextId: String(found.nextId) }, problems: found.problems };
+    },
+
+    async planPesos(cfg, a) {
+      return planSwap(makeClients(cfg).publicClient, a);
+    },
+
+    async fundPesos(cfg, plan, o) {
+      const c = makeClients(cfg);
+      const done = await executeSwap(c, plan, o);
+      const tagged = await verifyTagged(c, done.swapHash);
+      return { ...done, tagged: tagged?.codes ?? null, balances: await readBalances(cfg) };
     },
 
     async register(cfg, meta, opts) {

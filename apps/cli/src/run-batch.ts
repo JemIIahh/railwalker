@@ -85,7 +85,7 @@ export const loadRotationState = (store: DataStore): Promise<RotationState> =>
 
 const STAGE_OF: Partial<Record<Endpoint['source'], Stage>> = { fixture: 'fixture', buy: 'buy', erc8004: 'unsolicited' }; // a visitor is never paid by the batch
 const ROUND: readonly Stage[] = ['fixture', 'buy', 'unsolicited'];
-const OUR_ASSETS = new Set<string>(['USAT', 'USDC']);
+const OUR_ASSETS = new Set<string>(['USAT', 'USDC', 'wARS', 'wBRL']);
 /** Refusals about the whole event or the wallet rather than one seller: nothing more can be paid this run. */
 const RUN_ENDING_REFUSALS = new Set<string>(['over_event_cap', 'below_reserve']);
 const MAX_SCAN_CONCURRENCY = 32;

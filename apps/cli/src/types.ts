@@ -1,4 +1,4 @@
-import type { Config, FeeSymbol, RegistrationMeta } from '@railwalker/chain';
+import type { Config, FeeSymbol, FundablePeso, FundingCoin, RegistrationMeta, SwapPlan } from '@railwalker/chain';
 import type { SpendLedger, SpendState } from '@railwalker/core';
 import type { DataStore, DiscoveryState } from '@railwalker/data';
 import type { Endpoint } from '@railwalker/discovery';
@@ -11,12 +11,15 @@ export interface CliFs {
   mkdir(path: string): Promise<void>;
 }
 
-/** Atomic units: 6 decimals for the three stablecoins, 18 for CELO. */
+/** Atomic units: 6 decimals for the three stablecoins, 18 for CELO and the pesos. */
 export interface Balances {
   celo: bigint;
   USDC: bigint;
   USDT: bigint;
   USAT: bigint;
+  /** The pesos the wallet holds. Absent when they were not read, which a payment treats as none. */
+  wARS?: bigint;
+  wBRL?: bigint;
 }
 
 export interface CheckResult {
@@ -24,6 +27,16 @@ export interface CheckResult {
   run: RunRecord;
   /** The spend state after this confirmation, to be saved. */
   spend: SpendState;
+}
+
+export interface FundResult {
+  /** null when the router already had an allowance that covered the swap. */
+  approveHash: `0x${string}` | null;
+  swapHash: `0x${string}`;
+  /** The ERC-8021 codes found on the swap, or null if it could not be verified. */
+  tagged: string[] | null;
+  /** The wallet after the swap. */
+  balances: Balances;
 }
 
 export interface RegisterResult {
@@ -55,6 +68,10 @@ export interface CliDeps {
   /** Free: what to look at this run, where the registry walk got to, and what went wrong on the way (never naming a seller). */
   discover: (cfg: Config, cursor: DiscoveryState, o: { fixturesUrl?: string }) => Promise<{ endpoints: Endpoint[]; cursor: DiscoveryState; problems: string[] }>;
   register: (cfg: Config, meta: RegistrationMeta, opts: { fee: FeeSymbol }) => Promise<RegisterResult>;
+  /** Free: quotes a swap of dollars into a peso. Nothing is sent. */
+  planPesos: (cfg: Config, a: { from: FundingCoin; to: FundablePeso; amountIn: bigint }) => Promise<SwapPlan>;
+  /** Sends the swap, tagged, and reports what it did. */
+  fundPesos: (cfg: Config, plan: SwapPlan, opts: { from: FundingCoin; fee: FeeSymbol }) => Promise<FundResult>;
 }
 
 /** What a command gets: the dependencies, redacting writers, and a way to register a secret that must never be printed. */

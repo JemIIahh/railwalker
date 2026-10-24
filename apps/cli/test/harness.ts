@@ -5,7 +5,7 @@ import type { Endpoint } from '@railwalker/discovery';
 import { fakeFetch, v2MultiAssetChallenge } from '@railwalker/testkit';
 import { RunRecorder, scanEndpoint, type CheckReport, type ConfirmOptions, type RunRecord, type ScanRequest } from '@railwalker/scanner';
 import { privateKeyToAddress } from 'viem/accounts';
-import { runCli, type Balances, type CliDeps, type RegisterResult } from '../src';
+import { runCli, type Balances, type CliDeps, type FundResult, type RegisterResult } from '../src';
 
 export const KEY = `0x${'ab'.repeat(32)}` as const;
 export const OTHER_KEY = `0x${'cd'.repeat(32)}` as const;
@@ -99,6 +99,8 @@ export function harness(
     readBalances: 0,
     confirm: [] as { cfg: unknown; opts: ConfirmOptions; spend: SpendState }[],
     register: [] as { cfg: unknown; meta: unknown; opts: unknown }[],
+    planPesos: [] as { from: string; to: string; amountIn: bigint }[],
+    fundPesos: [] as { plan: unknown; opts: unknown }[],
     confirmThrough: [] as { cfg: unknown; ledger: SpendLedger; sellerKey: string; report: CheckReport; opts: ConfirmOptions }[],
     openStore: [] as string[],
     discover: [] as { cursor: DiscoveryState; fixturesUrl?: string }[],
@@ -152,6 +154,17 @@ export function harness(
     register: async (cfg, meta, opts) => {
       calls.register.push({ cfg, meta, opts });
       return { hash: `0x${'12'.repeat(32)}`, agentId: 7n, tagged: [CODE] } satisfies RegisterResult;
+    },
+    // $1 buys 1,630 wARS or 5 wBRL: the market at the time of writing, 18-decimal units.
+    planPesos: async (_cfg, a) => {
+      calls.planPesos.push(a);
+      const perDollar = a.to === 'wARS' ? 1_630n : 5n;
+      const quotedOut = (a.amountIn * perDollar * 10n ** 18n) / 1_000_000n;
+      return { route: { tokens: [], fees: [] }, path: '0x', amountIn: a.amountIn, quotedOut, minOut: (quotedOut * 99n) / 100n };
+    },
+    fundPesos: async (_cfg, plan, opts) => {
+      calls.fundPesos.push({ plan, opts });
+      return { approveHash: `0x${'a1'.repeat(32)}`, swapHash: `0x${'b2'.repeat(32)}`, tagged: [CODE], balances: { ...FAUCET, USAT: 1_750_000n, wARS: plan.quotedOut } } satisfies FundResult;
     },
     ...rest,
   };

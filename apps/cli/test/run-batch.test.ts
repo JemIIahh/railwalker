@@ -291,17 +291,23 @@ describe('runBatch: what it pays, and in what order', () => {
     expect(SpendStateSchema.parse(JSON.parse((await world.store.read('state/spend.json'))!)).totalUsd).toBe(0);
   });
 
-  test('what cannot be paid is never offered to the payer: no x402 challenge, no dollar asset, not read-style, a skipped scan, a visitor', async () => {
+  test('what cannot be paid is never offered to the payer: no x402 challenge, no asset we pay with, not read-style, a skipped scan, a visitor', async () => {
     const plain = endpoint('buy', 1);
     const noX402 = endpoint('buy', 2);
-    const pesos = endpoint('buy', 3);
+    const usdtOnly = endpoint('buy', 3); // USDT is never paid with
     const action = endpoint('buy', 4, { url: 'https://gateway.usebuy.ai/v1/send-payment' });
     const unsafe = endpoint('buy', 5, { url: 'http://gateway.usebuy.ai/v1/insecure' });
     const visitor = endpoint('buy', 6, { source: 'visitor' });
-    const how = (e: Endpoint) => (e.url === noX402.url ? 'not-x402' : e.url === pesos.url ? 'pesos' : 'ok');
-    const r = await runOnce([plain, noX402, pesos, action, unsafe, visitor], { maxPaidPerRun: 10, scanHow: how });
+    const how = (e: Endpoint) => (e.url === noX402.url ? 'not-x402' : e.url === usdtOnly.url ? 'usdt-only' : 'ok');
+    const r = await runOnce([plain, noX402, usdtOnly, action, unsafe, visitor], { maxPaidPerRun: 10, scanHow: how });
     expect(r.calls.map((c) => c.url)).toEqual([plain.url]);
     expect(r.result.scanned).toBe(6); // everything is still scanned, and counted in the summary
+  });
+
+  test('a seller that takes only pesos is offered to the payer: whether the wallet holds the pesos is the payer’s call', async () => {
+    const pesoOnly = endpoint('buy', 1);
+    const r = await runOnce([pesoOnly], { maxPaidPerRun: 10, scanHow: () => 'pesos' });
+    expect(r.calls.map((c) => c.url)).toEqual([pesoOnly.url]);
   });
 
   test.each([

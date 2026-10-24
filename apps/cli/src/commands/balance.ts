@@ -13,6 +13,8 @@ export async function balance(ctx: Ctx, _args: Parsed): Promise<number> {
       `  USDC  ${fixed(b.USDC, 6)}`,
       `  USDT  ${fixed(b.USDT, 6)}`,
       `  USAT  ${fixed(b.USAT, 6)}`,
+      ...(b.wARS === undefined ? [] : [`  wARS  ${fixed(b.wARS, 18)}`]),
+      ...(b.wBRL === undefined ? [] : [`  wBRL  ${fixed(b.wBRL, 18)}`]),
       `  CELO  ${fixed(b.celo, 18)}`,
       `stablecoins  ${usd(stablecoinUsd(b))}`,
       '',
