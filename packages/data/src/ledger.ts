@@ -1,5 +1,7 @@
-import { assetByAddress, classifyIndependence, type IndependenceReason, type TokenTransfer, type WalletFacts } from '@railwalker/core';
+import { INDEPENDENCE_REASONS, assetByAddress, classifyIndependence, type IndependenceReason, type TokenTransfer, type WalletFacts } from '@railwalker/core';
 import type { RunRecord } from '@railwalker/scanner';
+import { z } from 'zod';
+import { TxHashSchema } from './schemas';
 
 export interface LedgerService {
   name: string;
@@ -125,3 +127,30 @@ export function buildLedger(a: LedgerInput): Ledger {
 
   return { spentUsd: dollars(spent), earnedUsd: dollars(earned), byService, signers, selfTransfers };
 }
+
+const count = z.number().int().nonnegative();
+const LedgerServiceSchema = z.strictObject({ name: z.string().min(1).max(100), calls: count, usd: z.number().nonnegative(), proofs: z.array(TxHashSchema).max(1000) });
+const LedgerSignerSchema = z.strictObject({ address: z.string().regex(/^0x[0-9a-f]{40}$/), counted: z.boolean(), reason: z.enum(INDEPENDENCE_REASONS) });
+
+export const LedgerSchema = z.strictObject({
+  spentUsd: z.number().nonnegative(),
+  earnedUsd: z.number().nonnegative(),
+  byService: z.array(LedgerServiceSchema).max(500),
+  signers: z.array(LedgerSignerSchema).max(5000),
+  selfTransfers: count,
+});
+
+/** What the runner publishes as `ledger.json` and the ledger page reads: the books, and what they were built for. */
+export const LedgerFileSchema = z.strictObject({
+  generatedAt: z.iso.datetime(),
+  hackathonStart: z.iso.datetime(),
+  /** The agent wallet: public, it is the address buyers pay. */
+  agent: z.string().regex(/^0x[0-9a-fA-F]{40}$/),
+  ledger: LedgerSchema,
+});
+export type LedgerFile = z.infer<typeof LedgerFileSchema>;
+
+// The schema stands in for the Ledger type. If either side changes without the other, this stops compiling.
+type Fits<From, To> = [From] extends [To] ? true : false;
+type Assert<_T extends true> = true;
+type _LedgerMatchesItsSchema = [Assert<Fits<z.output<typeof LedgerSchema>, Ledger>>, Assert<Fits<Ledger, z.input<typeof LedgerSchema>>>];

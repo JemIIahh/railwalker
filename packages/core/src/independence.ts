@@ -25,7 +25,8 @@ export interface IndependenceInput {
   hackathonStart: string;
 }
 
-export type IndependenceReason = 'counted' | 'is_project_wallet' | 'funded_by_project' | 'no_prior_activity' | 'activity_after_start';
+export const INDEPENDENCE_REASONS = ['counted', 'is_project_wallet', 'funded_by_project', 'no_prior_activity', 'activity_after_start'] as const;
+export type IndependenceReason = (typeof INDEPENDENCE_REASONS)[number];
 
 /**
  * The hackathon's definition: not ours, not first funded by us, and with its own Celo activity BEFORE the start.

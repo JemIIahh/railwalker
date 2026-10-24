@@ -7,18 +7,20 @@ import type { CheckReport, RunRecord } from '@railwalker/scanner';
  * declared (a stray `privateKey`, say) makes the record invalid instead of travelling into a public file.
  */
 
-const AssetSymbolSchema = z.enum(Object.keys(ASSETS) as [AssetSymbol, ...AssetSymbol[]]);
+export const AssetSymbolSchema = z.enum(Object.keys(ASSETS) as [AssetSymbol, ...AssetSymbol[]]);
 const FindingCodeSchema = z.enum(FINDING_ORDER);
-const VerdictCodeSchema = z.enum([...FINDING_ORDER, ...SKIP_REASONS]);
+export const VerdictCodeSchema = z.enum([...FINDING_ORDER, ...SKIP_REASONS]);
+export const VerdictKindSchema = z.enum(['PASS', 'PASS_WITH_WARNINGS', 'FAIL', 'AMBIGUOUS', 'SKIPPED']);
 const StageSchema = z.enum(STAGES);
-const BasisSchema = z.enum(['CONFIRMED', 'PREDICTED']);
+export const BasisSchema = z.enum(['CONFIRMED', 'PREDICTED']);
 const MethodSchema = z.enum(['GET', 'POST']);
 
 const iso = z.iso.datetime();
 const id16 = z.string().regex(/^[0-9a-f]{16}$/);
 const count = z.number().int().nonnegative();
 const hexAddress = z.custom<`0x${string}`>((v) => typeof v === 'string' && /^0x[0-9a-fA-F]{40}$/.test(v), 'not a 0x address');
-const txHash = z.string().regex(/^0x[0-9a-fA-F]{64}$/);
+export const TxHashSchema = z.string().regex(/^0x[0-9a-fA-F]{64}$/);
+const txHash = TxHashSchema;
 /** What a seller chose to say. It was bounded where it came in (clipDeep), so any JSON value may sit inside. */
 const sellerJson = z.record(z.string(), z.unknown());
 
@@ -34,7 +36,7 @@ const FindingSchema = z.strictObject({
 });
 
 const VerdictSchema = z.strictObject({
-  kind: z.enum(['PASS', 'PASS_WITH_WARNINGS', 'FAIL', 'AMBIGUOUS', 'SKIPPED']),
+  kind: VerdictKindSchema,
   code: VerdictCodeSchema.optional(),
   basis: BasisSchema,
   assetSymbol: AssetSymbolSchema.optional(),

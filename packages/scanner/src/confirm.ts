@@ -114,7 +114,8 @@ function recordScan(rec: RunRecorder, report: CheckReport): void {
   if (!c) return;
   const errors = report.findings.filter((f) => f.severity === 'error').length;
   const warnings = report.findings.filter((f) => f.severity === 'warn').length;
-  rec.step('lints', errors === 0, `${report.findings.length} findings: ${errors} errors, ${warnings} warnings`, { codes: report.findings.map((f) => f.code) });
+  const n = (count: number, noun: string) => `${count} ${noun}${count === 1 ? '' : 's'}`;
+  rec.step('lints', errors === 0, `${n(report.findings.length, 'finding')}: ${n(errors, 'error')}, ${n(warnings, 'warning')}`, { codes: report.findings.map((f) => f.code) });
 }
 
 async function confirmAsset(c: Ctx, symbol: AssetSymbol, accept: Accept): Promise<AssetResult> {

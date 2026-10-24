@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { ASSETS, type TokenTransfer, type WalletFacts } from '@railwalker/core';
 import type { RunRecord } from '@railwalker/scanner';
-import { buildLedger, type LedgerInput } from '../src';
+import { LedgerFileSchema, buildLedger, type LedgerInput } from '../src';
 
 const AGENT = '0xa000000000000000000000000000000000000001';
 const PROBE = '0xb000000000000000000000000000000000000002';
@@ -250,5 +250,64 @@ describe('buildLedger: what we bought, and from whom', () => {
   test('a run whose endpoint is not a URL still counts, under a name that does not claim to be one', () => {
     const l = ledger({ runs: [run({ endpoint: { url: 'not a url', method: 'GET' }, payments: [payment()] })] });
     expect(l.byService.map((s) => s.name)).toEqual(['unknown service']);
+  });
+});
+
+describe('LedgerFileSchema: the file the runner publishes and the ledger page reads', () => {
+  const built = buildLedger({
+    ...empty,
+    projectWallets: [PROBE],
+    incoming: [transfer({ from: PAYER, to: AGENT, amount: '5000' }), transfer({ from: PROBE, to: AGENT })],
+    outgoing: [transfer({ from: AGENT, to: SELLER, token: ASSETS.USAT.address, amount: '6030' })],
+    runs: [run({ payments: [payment()] }), run({ id: '0000000000000009', kind: 'fixture', endpoint: { url: 'https://railwalker.example/api/fixtures/ok', method: 'GET' }, payments: [payment()] })],
+    facts: { [PAYER]: facts(PAYER) },
+  });
+  const ok = { generatedAt: '2026-10-22T12:00:00.000Z', hackathonStart: START.replace('Z', '.000Z'), agent: AGENT, ledger: built };
+
+  test('accepts what the books build, and an empty ledger', () => {
+    expect(LedgerFileSchema.parse(ok)).toEqual(ok);
+    expect(LedgerFileSchema.safeParse({ ...ok, ledger: buildLedger(empty) }).success).toBe(true);
+  });
+
+  test('the books really do contain a service, a signer and a self transfer, so the case above means something', () => {
+    expect(built.byService.length).toBeGreaterThan(1);
+    expect(built.signers).toHaveLength(1);
+    expect(built.selfTransfers).toBe(1);
+  });
+
+  const withLedger = (over: Record<string, unknown>) => ({ ...ok, ledger: { ...built, ...over } });
+  const withService = (over: Record<string, unknown>) => withLedger({ byService: [{ ...built.byService[0]!, ...over }] });
+  const withSigner = (over: Record<string, unknown>) => withLedger({ signers: [{ ...built.signers[0]!, ...over }] });
+
+  test.each([
+    ['an extra field on the file', { ...ok, privateKey: 'x' }],
+    ['an extra field on the ledger', withLedger({ hosts: ['secret.example'] })],
+    ['an extra field on a service', withService({ payTo: SELLER })],
+    ['an extra field on a signer', withSigner({ firstFunder: FUNDER })],
+    ['spent below zero', withLedger({ spentUsd: -0.01 })],
+    ['earned below zero', withLedger({ earnedUsd: -0.01 })],
+    ['earned that is not a number', withLedger({ earnedUsd: '5' })],
+    ['earned that is infinite', withLedger({ earnedUsd: Number.POSITIVE_INFINITY })],
+    ['a service with no name', withService({ name: '' })],
+    ['a service with an absurd name', withService({ name: 'x'.repeat(200) })],
+    ['fractional calls', withService({ calls: 1.5 })],
+    ['negative calls', withService({ calls: -1 })],
+    ['dollars below zero on a service', withService({ usd: -1 })],
+    ['a proof that is not a transaction hash', withService({ proofs: ['0x123'] })],
+    ['a signer address in capitals', withSigner({ address: PAYER.toUpperCase().replace('0X', '0x') })],
+    ['a signer address that is not an address', withSigner({ address: 'someone' })],
+    ['a reason that does not exist', withSigner({ reason: 'because' })],
+    ['a signer counted as text', withSigner({ counted: 'yes' })],
+    ['self transfers below zero', withLedger({ selfTransfers: -1 })],
+    ['self transfers that are fractional', withLedger({ selfTransfers: 0.5 })],
+    ['an agent that is not an address', { ...ok, agent: 'agent' }],
+    ['a generation time that is not ISO', { ...ok, generatedAt: 'now' }],
+    ['a hackathon start that is not ISO', { ...ok, hackathonStart: 'soon' }],
+    ['no ledger', { generatedAt: ok.generatedAt, hackathonStart: ok.hackathonStart, agent: AGENT }],
+    ['more services than there can be', withLedger({ byService: Array.from({ length: 501 }, () => built.byService[0]!) })],
+    ['more signers than there can be', withLedger({ signers: Array.from({ length: 5001 }, () => built.signers[0]!) })],
+    ['more proofs than a service can have', withService({ proofs: Array.from({ length: 1001 }, (_, i) => `0x${i.toString(16).padStart(64, '0')}`) })],
+  ])('rejects %s', (_name, value) => {
+    expect(LedgerFileSchema.safeParse(value).success).toBe(false);
   });
 });

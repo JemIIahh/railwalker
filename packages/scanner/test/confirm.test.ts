@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { ASSETS, DEFAULT_POLICY, SpendLedger, emptySpendState, shapeOf, type AssetSymbol } from '@railwalker/core';
+import { ASSETS, DEFAULT_POLICY, SpendLedger, emptySpendState, makeFinding, shapeOf, type AssetSymbol, type Finding } from '@railwalker/core';
 import { fakeFetch, v2MultiAssetChallenge } from '@railwalker/testkit';
 import type { PayFailureCode, PayOutcome, PayRequest } from '@railwalker/chain';
 import { confirmEndpoint, scanEndpoint, type CheckReport, type ConfirmDeps, type ConfirmOptions } from '../src';
@@ -448,6 +448,16 @@ describe('confirmEndpoint: the run record', () => {
     const { run } = await confirmEndpoint(deps, await scan(), opts());
     const ts = run.steps.map((s) => s.t);
     expect(ts).toEqual([...ts].sort((a, b) => a - b));
+  });
+
+  test('the lints step reads naturally for no findings, one finding and several', async () => {
+    const base = await scan();
+    const label = async (findings: Finding[]) => (await confirmEndpoint(setup().deps, { ...base, findings }, opts({ assets: [] }))).run.steps.find((s) => s.stage === 'lints')!.label;
+    expect(await label([])).toBe('0 findings: 0 errors, 0 warnings');
+    expect(await label([makeFinding('no_output_schema', 'x')])).toBe('1 finding: 0 errors, 0 warnings');
+    expect(await label([makeFinding('payto_zero', 'x')])).toBe('1 finding: 1 error, 0 warnings');
+    expect(await label([makeFinding('cors_missing', 'x')])).toBe('1 finding: 0 errors, 1 warning');
+    expect(await label([makeFinding('cors_missing', 'x'), makeFinding('too_slow', 'x'), makeFinding('payto_zero', 'x')])).toBe('3 findings: 1 error, 2 warnings');
   });
 
   test('a skipped confirmation still ends in a verdict step that says why', async () => {
